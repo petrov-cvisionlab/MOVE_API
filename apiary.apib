@@ -1,0 +1,3402 @@
+FORMAT: 1A
+
+
+
+# MOVE
+
+
+
+The API works over the HTTP 1.1 protocol. 
+It exposes a set of resources, which can be used to retrieve and/or modify application state. 
+States of resources are represented in JSON or XML. 
+Operations are specified by HTTP request methods, their parameters – by URI query string. 
+Response codes are (subset of) those defined by the HTTP standard. The API is stateless.
+
+The application consists of three major parts: **_core_**, **_engine_** and **_data service_**. 
+Each part exposes its own resources.
+
+The **_core_** is always running and performs general maintenance functions. 
+If only **_core_** is running, the application is in **_idle mode_**.
+
+The **_engine_** is the main functional component. 
+It retrieves data from input device, processes it and passes results for **_data service_** to collect. 
+It can be started and stopped via `state` resource.
+If **_engine_** is running, the application is in **_live mode_** (collects data). 
+
+The **_data service_** is responsible for collecting tracking data to and retrieving it from DB. 
+It can be considered as a part of **_engine_**, but it is able to run separately. 
+When **_data service_** runs as part of **_engine_**, it works in **_live mode_** and has a 
+`current session`. 
+If it runs separately, it is in **_historic mode_** and have no `current session` 
+(can only retrieve data from previous sessions). 
+
+
+# Resources exposed by core
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Name</th>
+            <th bgcolor="#555555">Function</th>
+        </tr>
+        
+        <tr><td>/log</td>
+            <td>Get log messages.</td></tr>
+        <tr><td>/network</td>
+            <td>Network configuration.</td></tr>
+        <tr><td>/input_devices</td>
+            <td>Input devices configuration.</td></tr>
+        <tr><td>/config</td>
+            <td>Get / set configuration of apllication and system.</td></tr>
+        <tr><td>/state</td>
+            <td>Get state of engine and data service, and set it (i.e. start / stop the component).</td></tr>
+        <tr><td>/command</td>
+            <td>Reload application data (license, plugins and settings).</td></tr>
+        <tr><td>/system</td>
+            <td>Reboot or shut down the system.</td></tr>
+        <tr><td>/license</td>
+            <td>Get list of licensed modules.</td></tr>
+        
+        <tr><td>/layout</td>
+            <td>Get / set layout of sensors (lines and areas) and tracker's special areas.</td></tr>
+        <tr><td>/borders_api</td>
+            <td>Meta-resource for line sensor subscribers control. It has several sub-resources.</td></tr>
+        <tr><td>/hotspots_api</td>
+            <td>Meta-resource for area sensor subscribers control. It has several sub-resources.</td></tr>
+    </tr>
+</table>
+
+
+# Resources exposed by data service
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Name</th> 
+            <th bgcolor="#555555">Function</th> 
+        </tr>
+    
+        <tr><td>/data</td>
+            <td>Get tracking data.</td></tr>
+    </tr>
+</table>
+
+         
+# Resources exposed by engine
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Name</th> 
+            <th bgcolor="#555555">Function</th> 
+        </tr>
+        
+        <tr><td>/video</td>
+            <td>Get video stream with recognition visualization marks.</td></tr>
+        <tr><td>/snapshots</td> 
+            <td>Save snapshot image of input video stream or
+                get snapshot image of input video stream.</td></tr>
+    </tr>
+</table>
+
+
+# Request
+The Request-URI have form
+
+    /resource_id [ ?query_string ] 
+     
+where expression in square brackets is optional.
+
+The *query_string* can have two forms:  
+1. series of pairs parameter=value, connected with the “&” character;  
+2. single value without parameter name.  
+Second form is used when operation has single parameter.
+
+Request must contain header field _Host_ required by HTTP 1.1:  
+Host: *host:port*  
+where  
+*host* - host domain name specified by configuration parameter $.system.web.domain or IP address;  
+*port* - pre-configured port number.
+
+If a request has body, it must include header fields _Content-Type_ with value _application/json_ or 
+_image/svg+xml_ and _Content-Length_.
+
+
+# Response
+The possible HTTP status values are listed in the following table.
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Status</th> 
+            <th bgcolor="#555555">Reason</th> 
+        </tr>
+        
+        <tr><td>200 OK</td>
+            <td>Operation completed successfully.</td></tr>
+        <tr><td>201 Created</td> 
+            <td>Resource created. This status is accompanied with header field Location containing URL of 
+                created resource.</td></tr>
+        <tr><td>303 See Other</td> 
+            <td>Client tries to create or update resource so that it becomes equal in certain sense to (other) already 
+                existing resource, which is not allowed. This status is accompanied with header field Location containing 
+                URL of that existing resource.</td></tr>
+        <tr><td>400 Bad Request</td>
+            <td>The request has incorrect syntax or structure.</td></tr>
+        <tr><td>401 Unauthorized</td>
+            <td>The request requires user authentication.</td></tr>
+        <tr><td>404 Not Found</td> 
+            <td>Resource specified in Request-URI is not found. Possible causes are incorrect resource identifier;
+                resource is provided by the engine or data service which is not running.</td></tr>
+        <tr><td>409 Conflict</td> 
+            <td>The request could not be completed due to a conflict with the current state of the resource. 
+                For example, the resource's data is used by running engine.</td></tr>
+        <tr><td>500 Internal Server Error</td>
+            <td>Internal application error.</td></tr>
+        <tr><td>503 Service Unavailable</td> 
+            <td>Operation could not be performed because application is in process of transition to another state 
+                 (for example, engine is starting).</td></tr>
+    </tr>
+</table>
+
+If response has body, it contains header fields _Content-Length_ and _Content-Type_.  
+If body is text message, value of _Content-Type_ is **text/plain; charset=UTF-8**,  
+if body is JSON -  **application/json; charset=UTF-8**,  
+if body is SVG - **image/svg+xml; charset=UTF-8**.
+
+
+# Authentication
+
+Requests from localhost or with GET method do not require authentication.  
+All other requests require authentication using Basic scheme, as described in RFC 2617.  
+The authentication parameter realm has value Move.
+
+
+# Data types
+
+This document uses two conventional data types.
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Type</th> 
+            <th bgcolor="#555555">Description</th> 
+        </tr>
+        
+        <tr><td>ApiTime</td>
+            <td>Number of milliseconds since 1970-01-01 00:00:00 UTC.<td/></tr>
+        <tr><td>ApiTimeMcs</td>
+            <td>Number of microseconds since 1970-01-01 00:00:00 UTC.<td/></tr>
+        <tr><td>ApiTimeStr</td>
+            <td>String in ISO 8601 extended format, possibly with milliseconds, UTC:YYYY-MM-DDTHH:MM:SS[.sss].<td/></tr>
+    </tr>
+</table>
+
+
+
+
+
+
+
+
+
+
+# Group Log
+
+The log resource gives access to the current session log, which contains informational and error messages.
+
+
+## Access to the current session log [/log{?begin_idx,end_idx}]
+
+### Return specified range of log events [GET]
+
+#### Response
+
+    JSON data  
+        { "events": [ event-list ] },  
+    where  
+        event:  
+        {  
+          "type": "type",
+          "time": "time"
+          "priority": "priority",  
+          "domain": "domain",  
+          "msg": "message"  
+        }  
+
+Event fields:
+
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Field</th>
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th>
+        </tr>
+        
+        <tr><td>type</td> 
+            <td>String</td> 
+            <td>Event type. There are several types, but only type “Msg” (message event) is documented. 
+                Others depend on implementation. The client should count all events for purpose of index calculation, 
+                but output only message events.</td></tr>
+        <tr><td>time</td> 
+            <td>ApiTimeMcs</td> 
+            <td>Event timestamp.</td></tr>
+        <tr><td>priority</td> 
+            <td>String</td> 
+            <td>Event priority. Possible values in order of increasing priority: info, notice, warning, error, 
+                critical, alert, emergency. The last three are very rare in practice. 
+                Also undocumented values can exist.</td></tr>
+        <tr><td>domain</td> 
+            <td>String</td> 
+            <td>Name of the application subsystem (e.g. module) that produced the event.</td></tr>
+        <tr><td>msg</td> 
+            <td>String</td> 
+            <td>Message text. It is pre-formatted with spaces and new line characters (\n).</td></tr>
+    </tr>
+</table>
+
+_Also undocumented fields can exist._
+
+
++ Parameters
+ + begin_idx (optional, number)
+  0-based index of the first event to return. If absent, assumed = 0.
+ + end_idx (optional, number)
+  0-based index of one past the last event to return. If absent, return events up to last one.
+
++ Response 200 (application/json)
+ + Body
+ 
+            { 
+                "events": [ 
+                    { 
+                        "domain": "", 
+                        "msg": "Move daemon is starting...", 
+                        "priority": "info", 
+                        "type": "Msg",
+                        "time": 145673373833
+                    }
+                ]
+            }
+
+
+
+
+
+
+
+
+
+
+# Group Network
+
+Resources of this group allow to get and set network configuration.
+
+The appliance is shipped with pre-defined set of available network interfaces. This set cannot be changed by user. 
+The user can change configuration of each interface and select which one the API should operate on (the **active interface**).
+
+Resources in this group use object NetworkInterface, which has following structure
+NetworkInterface:
+
+        {
+            id:
+            is_wlan:
+    
+            ssid:
+            security_method:
+            wpa_passphrase:
+            
+            config_method_dhcp:
+            address:
+            netmask:
+            gateway:
+            dns_nameservers: [ dns_nameserver-list ]
+        }
+        
+where
+<table>
+    <tr> 
+        <tr>
+            <th bgcolor="#555555">Name</th>
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th>
+        </tr>
+        
+        <tr><td>id</td>
+            <td>String</td>
+            <td>Interface ID. Examples: eth1, wlan0</td></tr>
+        <tr><td>is_wlan</td>
+            <td>Boolean</td>
+            <td>If interface is wireless.</td></tr>
+        
+        <tr bgcolor="#999999">
+            <td colspan="3">WLAN parameters</td>
+        </tr>
+        <tr><td>ssid</td>
+            <td>String</td>
+            <td>SSID of WLAN to connect to. Present only if is_wlan is true.</td></tr>
+        <tr><td>security_method</td> 
+            <td>String</td> 
+            <td>Security method to use in WLAN. Valid values are:<br>
+                <<empty/>empty> - use none<br>
+                wep – currently not supported<br>
+                wpa – currently not supported<br>
+                wpa2<br>
+                Present only if is_wlan is true.</td></tr>
+        <tr><td>wpa_passphrase</td> 
+            <td>String</td>
+            <td>WPA passphrase.<br>
+                Present only if security method is WPA or WPA2.</td></tr>
+        
+        <tr bgcolor="#999999">
+            <td colspan="3">High-level parameters</td>
+        </tr>
+        <tr><td>config_method_dhcp</td>
+            <td>Boolean</td>
+            <td>If configuration method is by DHCP.</td></tr>
+        <tr><td>address</td>
+            <td>ipv4</td>
+            <td>Address.</td></tr>
+        <tr><td>netmask</td>
+            <td>ipv4</td>
+            <td>Netmask.</td></tr>
+        <tr><td>gateway</td>
+            <td>ipv4</td>
+            <td>Default gateway. May be empty.</td></tr>
+        <tr><td>dns_nameserver</td>
+            <td>ipv4</td>
+            <td>Address of DNS name server.</td></tr>
+    </tr>
+</table>
+
+When  NetworkInterface object is retrieved from server, the following rules apply.
+
+ - Field wpa_passphrase is absent. - Not true currently and questionable generally.
+ - If configuration method is DHCP, high-level parameters (except config_method) specify values assigned by DHCP. 
+   A parameter can be absent if its value currently cannot be determined (probably because interface is down).
+
+
+## Network Interfaces [/network/interfaces]
+
+This resource represents the collection of system's network interfaces and allows to get their configuration.
+
+### Get configuration of network interfaces [GET]
+
+####Response
+
+    JSON data
+    [ NetworkInterface-list ]
+
++ Response 200 (application/json)
+ + Body
+ 
+             [ 
+                { 
+                    "address": "192.168.0.62", 
+                    "config_method_dhcp": true, 
+                    "dns_nameservers": [ 
+                        "192.168.0.5", 
+                        "8.8.8.8" 
+                    ], 
+                    "gateway": "192.168.0.5", 
+                    "id": "eth0", 
+                    "is_wlan": false, 
+                    "netmask": "255.255.255.0" 
+                }, 
+                { 
+                    "address": "192.168.0.112", 
+                    "config_method_dhcp": true, 
+                    "dns_nameservers": [ 
+                        "192.168.0.5", 
+                        "8.8.8.8" 
+                    ], 
+                    "id": "wlan0", 
+                    "is_wlan": true, 
+                    "netmask": "255.255.255.0", 
+                    "security_method": "wpa2", 
+                    "ssid": "...", 
+                    "wpa_passphrase": "..." 
+                } 
+            ]
+
+
+## Network interface [/network/interfaces/{id}]
+
+This resource represents network interface.
+
++ Parameters
+
+    + id (required, string, `eth0`)
+ 
+        The `id` is one the IDs retrieved in GET /network/interfaces request.  
+
+### Get network interface configuration [GET]
+
++ Response 200 (application/json)
+ + Body
+ 
+            { 
+                "address": "192.168.0.62", 
+                "config_method_dhcp": true, 
+                "dns_nameservers": [ 
+                    "192.168.0.5", 
+                    "8.8.8.8" 
+                ], 
+                "gateway": "192.168.0.5", 
+                "id": "eth0", 
+                "is_wlan": false, 
+                "netmask": "255.255.255.0" 
+            }
+
+
+### Set network interface configuration [PUT]
+
+#### Request
+
+    JSON data
+    NetworkInterface
+
+Fields that do not change may be absent.
+
+Fields id, type are ignored and may be absent.
+
+If after applying specified settings security method should be WPA or WPA2, the field wpa_passphrase is ignored and 
+may be absent. (This behavior might change.)
+
+
+#### Response
+
+If the client operates from remote host, and changed interface is the active one, and the call is successful, 
+the connection is closed and the client receives no response. After that it can connect again, possibly using 
+new address if it has changed.
+
+If id does not correspond to any interface, the response status is 404 Not Found.
+
+If DHCP network configuration is activated and there is no DHCP server available, the response status is 409 Conflict 
+and the body contains reason text.
+
++ Request (application/json)
+
+ + Body
+ 
+            { 
+                "config_method_dhcp": false,
+                "address": "192.168.0.62",
+                "netmask": "255.255.255.0",
+                "gateway": "192.168.0.5",
+                "dns_nameservers": [ "192.168.0.5", "8.8.8.8" ]
+            }
+
++ Response 200
+
+
+## SSID`s network interface [/network/interfaces/{id}/ssids]
+
+This resource represents the set of SSIDs of networks currently available via WLAN network interface.
+
++ Parameters
+
+ + id (required, string, `eth0`)
+  The `id` is one the IDs retrieved in GET /network/interfaces request.
+
+### Get available SSIDs [GET]
+
+#### Response
+
+    JSON data
+    [ ssid-list ]
+    
+where _ssid_ is a String.
+
+If _id_ does not correspond to WLAN interface, response status is 404 Not Found.
+
+
++ Response 200 (application/json)
+
+ + Body
+ 
+            [
+                "123",
+                "234"
+            ]
+
+
+## Active Network Interface ID configuration [/network/active_interface_id]
+
+This resource holds the ID of active network interface.
+
+### Get active network interface ID [GET]
+
+#### Response
+
+    JSON data
+    { "id": id }
+    
+where _id_ is a String specifying the interface ID.
+
++ Response 200 (application/json)
+
+ + Body
+ 
+             { 
+                "id": "eth0" 
+            }
+
+### Set active network interface ID [PUT]
+
+#### Request
+
+    JSON data
+    { "id": id }
+    
+where _id_ is a String specifying the interface ID.
+
+
+#### Response
+
+If the client operates from remote host and the call is successful, the connection is closed and the client receives no 
+response. After that it can connect again, using new active interface address.
+
+If specified ID does not correspond to any interface, the response status is 400 Bad Request.
+
++ Request (application/json)
+
+ + Body
+ 
+            {
+                "id": "wlan0"
+            }
+
++ Response 200
+
+
+
+
+
+
+
+
+
+
+# Group Input Devices
+
+Resources is this group allow to configure input devices.
+
+Input devices are distinguished by type. Move supports only cameras.
+
+A device can be connected to the system locally (via USB for example) or be available via network. They are called
+**local device** and **network device** respectively. Local devices are read-only in API; the client can only select
+one of them as active. Network devices can be added, updated and deleted by the client.
+Currently only cameras can be network devices.
+
+More than one device of same type can be available. For example, one could have second camera that is differently placed,
+or used for something beside Move. Each device has the **location**.
+
+To distinguish similar local devices user needs to establish an (informal) agreement about which device is plugged to
+which port. For example, always plug “top” camera to left USB port on motherboard's back, and “bottom” camera to
+right USB port. Then in API a **system location** (data identifying a port) of a device can be used as a reflection of
+its physical placement / purpose / other distinctive property. For local devices the location is its system location.
+
+For network devices the location is an URL.
+
+The active input device is identified by both its type and location. If a device of configured type is not found at
+configured location, the **_engine_** will not start.
+
+If local device configured as active is unplugged, it still is included in device list, with field plugged set to false. 
+After activation of other (plugged) device, unplugged device is discarded.
+
+Any action changing active input device location (including device switching) is not allowed while **_engine_** is running 
+(application is in **_live mode_**). 
+The response status in such case is 409 Conflict with corresponding text message. 
+The client must stop the **_engine_**, perform configuration changes and start the **_engine_** again.
+
+Resources in this group use following data types.
+Data type DeviceId represents input device ID. It is an unsigned integer number.
+
+Data type Device represents an input device. It is an object with the following structure
+
+    Device:
+        {
+            id:
+            type:
+            connection:
+            location:
+            name: 
+            plugged:
+        }
+    
+where
+
+<table>
+    <tr>
+        <tr>
+            <th bgcolor="#555555">Field</th>
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th>
+        </tr>
+        
+        <tr><td>id</td> 
+            <td>DeviceId</td> 
+            <td>Device ID, assigned by the server.</td></tr>
+        <tr><td>type</td> 
+            <td>String</td> 
+            <td>Device type. Possible value is Camera.</td></tr>
+        <tr><td>connection</td> 
+            <td>String</td> 
+            <td>Device connection type. Possible values are local and network.</td></tr>
+        <tr><td>location</td> 
+            <td>String</td> 
+            <td>Device location.<br>
+                For local devices this is system location, for example usb-0000:00:1a.0-1.3.<br>
+                For network devices this is URL.<br></td></tr>
+        <tr><td>name</td> 
+            <td>String</td> 
+            <td>Device name.<br>
+                For local devices it is read-only. It is empty (cannot be determined) if device is unplugged. 
+                Example: Microsoft® LifeCam HD-5000.<br>
+                For network devices the name must be set by the client.<br></td></tr>
+        <tr><td>plugged</td> 
+            <td>Boolean</td> 
+            <td>Indicates if local device is currently plugged. This field is absent for network devices.<br>
+                There is only one case when this field is false – if active local device is unplugged.</td></tr>
+    </tr>
+</table>
+
+
+## Input Devices [/input_devices/devices]
+
+This resource represents all input devices known to the system.
+
+### Get all devices [GET]
+
+#### Response
+
+    JSON data
+    [ Device-list ]
+
++ Response 200 (application/json)
+
+ + Body
+ 
+            [ 
+                { 
+                    "connection": "local", 
+                    "id": 1, 
+                    "location": "usb-0000:00:1d.0-1.6", 
+                    "name": "A4 TECH USB2.0 PC Camera J", 
+                    "plugged": true, 
+                    "type": "Camera" 
+                }, 
+                { 
+                    "connection": "network", 
+                    "id": 2, 
+                    "location": "rtsp://user:pass@fisheye:8554/CH001.sdp?tcp", 
+                    "name": "FishEye", 
+                    "type": "Camera" 
+                } 
+            ]
+
+### Add network input device - camera [POST]
+
+#### Request
+
+    JSON data
+    Device
+    
+Only fields location and name are required, the rest is ignored.
+
+#### Response
+
+    JSON data
+    Identifier (DeviceId) assigned to device by the server.
+
++ Request (application/json)
+
+ + Body
+ 
+            { 
+                "location": "rtsp://user:pass@fisheye:8554/CH001.sdp?tcp", 
+                "name": "FishEye"
+            }
+
++ Response 201 (application/json)
+ + Header
+ 
+            Location : http://root/input_devices/devices/2
+
+ + Body
+ 
+            2
+
+
+## Network Input Devices [/input_devices/devices/network]
+
+This resource represents network input devices (cameras).
+
+### Get network input devices - cameras [GET]
+
+#### Response
+
+    JSON data
+    [ Device-list ]
+
++ Response 200 (application/json)
+
+ + Body
+ 
+            [ 
+                { 
+                    "connection": "network", 
+                    "id": 2, 
+                    "location": "rtsp://user:pass@fisheye:8554/CH001.sdp?tcp", 
+                    "name": "FishEye", 
+                    "type": "Camera" 
+                } 
+            ]
+
+### Add network input device - camera [POST]
+
+#### Request
+
+    JSON data
+    Device
+    
+Only fields location and name are required, the rest is ignored.
+
+#### Response
+
+    JSON data
+    Identifier (DeviceId) assigned to device by the server.
+    
++ Request (application/json)
+
+ + Body
+ 
+            { 
+                "location": "rtsp://user:pass@fisheye:8554/CH001.sdp?tcp", 
+                "name": "FishEye"
+            }
+
++ Response 201 (application/json)
+ + Header
+ 
+            Location : http://root/input_devices/devices/2
+
+ + Body
+ 
+            2
+
+### Delete all network input devices - cameras [DELETE]
+
+#### Response
+
+If active input device is network device and **_engine_** is running (application is in **_live mode_**), 
+response status is 409 Conflict.
+
++ Response 200
+
+
+## Input Device [/input_devices/devices/{id}]
+
+This resource represents input device.
+
++ Parameters
+    + id (required, number, `1`) 
+     The `id` is one of the IDs retrieved in GET /input_devices/devices request.
+
+### Get input device [GET]
+
+#### Response
+
+    JSON data
+    Device
+
++ Response 200 (application/json)
+
+ + Body
+ 
+            { 
+                "connection": "local", 
+                "id": 1, 
+                "location": "usb-0000:00:1d.0-1.6", 
+                "name": "A4 TECH USB2.0 PC Camera J", 
+                "plugged": true, 
+                "type": "Camera" 
+            }
+
+### Update network input device - camera [PUT]
+
+#### Request
+
+    JSON data
+    Device
+    
+Only fields location and name are required, the rest is ignored.
+
+#### Response
+
+If id does not correspond to any device, the response status is 404 Not Found.
+
+If id identifies local device, the response status is 405 Method Not Allowed.
+
+If id identifies active input device, field location is being updated and **_engine_** is running 
+(application is in **_live mode_**), response status is 409 Conflict.
+
++ Request (application/json)
+
+ + Body
+ 
+            { 
+                "location": "rtsp://user:pass@fisheye:8554/CH001.sdp?tcp", 
+                "name": "FishEye"
+            }
+
++ Response 200
+
+### Delete network input device - camera [DELETE]
+
+#### Response
+
+If id does not correspond to any device, the response status is 404 Not Found.
+
+If id identifies local device, the response status is 405 Method Not Allowed.
+
+If id identifies active input device and **_engine_** is running (application is in **_live mode_**), 
+response status is 409 Conflict.
+
++ Response 200
+
+
+## Active Input Device [/input_devices/active_id{?id}]
+
+This resource represents active input device ID
+
+### Get active device ID [GET]
+
+#### Response
+
+    JSON data
+    Identifier (DeviceId) of active device or null if active device is not set.
+
++ Response 200 (application/json)
+
+ + Body
+ 
+            1
+
+### Set active input device ID [PUT]
+
+#### Response
+
+If **_engine_** is running (application is in **_live mode_**), response status is 409 Conflict.
+
+If id does not correspond to any device, the response status is 400 Bad Request.
+
++ Parameters
+    + id (required, number, `1`) 
+     The `id` is one of the IDs retrieved in GET /input_devices/devices request.
+
++ Response 200
+
+
+## Input Devices and Active Input Device [/input_devices]
+
+This is a composite resource combining resources /input_devices/devices and /input_devices/active_id.
+
+### Get all input devices and active device ID [GET]
+
+#### Response
+
+    JSON data
+    {
+        "devices": [ Device-list ],
+        "active_id": active_id
+    }
+    
+See /input_devices/devices and /input_devices/active_id for details.
+
++ Response 200 (application/json)
+
+ + Body
+ 
+            { 
+                "active_id": 2, 
+                "devices": [ 
+                    { 
+                        "connection": "local", 
+                        "id": 1, 
+                        "location": "usb-0000:00:1d.0-1.6", 
+                        "name": "A4 TECH USB2.0 PC Camera J", 
+                        "plugged": true, 
+                        "type": "Camera" 
+                    }, 
+                    { 
+                        "connection": "network", 
+                        "id": 2, 
+                        "location": "rtsp://user:pass@fisheye:8554/CH001.sdp?tcp", 
+                        "name": "FishEye", 
+                        "type": "Camera" 
+                    } 
+                ] 
+            }
+
+
+
+
+
+
+
+
+
+
+# Group State
+
+This resource allows to get and set application state. 
+The application state consists of **_engine_** state and **_data service_** state.
+
+There are four states for **_engine_** and **_data service_**: _stopped_, _starting_, _running_, _stopping_.
+
+If the **_engine_** is _starting_, _running_ or _stopping_, **_data service_** is doing the same 
+(because it is part of **_engine_**). 
+If **_engine_** is _stopped_, **_data service_** can be in any state.
+
+    JSON data
+    {
+        "engine": "state",
+        "data_service": "state"
+    }
+    
+where _state_ is one of:
+
+ - stopped
+ - starting
+ - running
+ - stopping
+
+## Current state [/state]
+
+### Get current application state [GET]
+
++ Response 200 (application/json)
+ + Body
+ 
+            { 
+                "data_service": "stopped", 
+                "engine": "stopped" 
+            }
+
+### Set application state, i. e. start or stop engine and/or data service [PUT]
+
+# Request
+
+Starting and stopping **_engine_** can take several seconds, so the requests must have appropriate timeout.
+
+Request JSON data structure is the same as described above, where **state** is _running_ to start and _stopped_ to stop 
+**_engine_** or **_data service_**.
+The combination of running **_engine_** and stopped **_data service_** is invalid.
+
+# Response
+
+If the application is already in requested state, response with status 200 OK is returned immediately.
+
+If the **_engine_** or **_data service_** is in state transitional to requested, request is handled as if it was 
+in state opposite to requested. 
+For instance, if **_engine_** is starting and request with started is made, this request is handled as if 
+**_engine_** was stopped, i.e. set to wait until operation is completed.
+
+If the **_engine_** or **_data service_** is starting and stop is requested, or it is stopping and start is requested, 
+response status is 503 Service Unavailable and body is as if GET /state request was made.
+
+If request is to start **_engine_** and stop **_data service_**, response status is 400 Bad Request.
+
++ Request (application/json)
+ + Body
+ 
+            { 
+                "data_service": "running", 
+                "engine": "running" 
+            }
+
++ Response 200
+
+
+
+
+
+
+
+
+
+
+# Group Command
+
+This resource allows to send command to reload application data (license, plug-ins (modules) and settings). 
+The core with HTTP server is not restarted.
+
+## Execute application command [/command?{command}]
+
++ Parameters
+    + command (required, string, `reload`)
+    
+        Reload application data. Has no value.
+
+        + Values
+            + `reload`
+
+
+### Execute application command [PUT]
+
+# Response
+
+Response has no data.
+
+If **_engine_** or **_data service_** is not _stopped_, response status is 503 Service Unavailable.
+
++ Response 200
+
+
+
+
+
+
+
+
+
+# Group System
+
+This resource allows to reboot or shut down the system.
+
+
+## Execute system command [/system?{command}]
+
++ Parameters
+    + command (required, string, `reboot`)
+    
+        Reboot or shut down the system
+
+        + Values
+            + `reboot`
+            + `shut_down`
+
+### Execute system command [PUT]
+
+# Request
+
+If the **_engine_** or **_data service_** is _running_, it is stopped before executing command. 
+This can take several seconds, so the request must have appropriate timeout.
+
+# Response
+
+Response has no data.
+
+Response status reflects result of executing corresponding system administration command, 
+i. e. result of initiating requested process.
+
++ Response 200
+
+
+
+
+
+
+
+
+
+
+# Group License
+
+This resource allows to get list of licensed modules.
+
+    JSON data
+    { "modules": [ module-list ] }
+    
+    module:
+        {
+            "name": "name",
+            "description": "description"
+        }
+
+where
+<table>
+    <tr>
+        <tr>
+            <th bgcolor="#555555">Field</th>
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th>
+        </tr>
+        
+        <tr><td>name</td>
+            <td>String</td>
+            <td>Module name.</td></tr>
+        <tr><td>description</td>
+            <td>String</td>
+            <td>Module description.</td></tr>
+    </tr>
+</table>
+
+
+## Licensed modules [/license]
+
+### Get list of licensed modules [GET]
+
++ Response 200 (application/json)
+ + Body
+ 
+            { 
+                "modules": [ 
+                    { 
+                        "description": "Inputs video from web/IP camera or file.", 
+                        "name": "VideoReader" 
+                    }
+                ] 
+            }
+
+
+
+
+
+
+
+
+
+
+# Group Video
+
+This resource allows to get video stream with recognition visualization marks in M-JPEG format.
+
+
+## Video stream [/video]
+
+### Get video stream [GET]
+
+# Response
+
+Response has M-JPEG format, which essentially is a sequence of JPEG images. The header contains field
+
+    Content-Type: multipart/x-mixed-replace;boundary=multipart_boundary
+
+Each frame's block of data has format
+
+    --multipart_boundary\r\n
+    Content-Type: image/jpeg\r\n
+    Content-Length: jpeg-length\r\n
+    \r\n
+    jpeg
+
+where
+
+<table>
+    <tr>
+        <tr>
+            <th bgcolor="#555555">Field</th>
+            <th bgcolor="#555555">Description</th>
+        </tr>
+        
+        <tr><td>jpeg-length</td>
+            <td>Length of frame image JPEG in bytes.</td></tr>
+        <tr><td>jpeg</td>
+            <td>Frame image JPEG data.</td></tr>
+    </tr>
+</table>
+
+Frame image size is 640x480 pixels.
+
++ Response 200
+
+ + Headers
+        
+            Content-Type: multipart/x-mixed-replace;boundary=multipart_boundary
+        
+ + Body
+ 
+            --multipart_boundary\r\n
+            Content-Type: image/jpeg\r\n
+            Content-Length: 4\r\n
+            \r\n
+            jpeg
+
+
+
+
+
+
+
+
+
+
+# Group Snapshots
+
+This resource allows to save snapshot image of input video stream. Input video stream is the stream produced by 
+input device. It does not display recognition marks.
+
+
+## Save current snapshots [/snapshots{?markup}]
+
++ Parameters
+    + markup (optional, string)
+    
+        Save snapshot with markup or not
+
+        + Values
+            + `true`
+
+### Save snapshot of last input frame and return its URL [POST]
+
+Image is saved in JPEG format. Its parameters and location are determined by settings of VisualSnapshotSaver module and 
+can be configured via API.
+If two or more requests are made for the same frame, snapshot is saved once.
+
+# Response
+
+Successful response has status 201 Created and header field Location specifying absolute URL of created snapshot.
+
+    JSON data
+    { "path": "path" }
+
+where _"path"_ is the path part of URL of saved snapshot image.
+
+The URL path is made by replacing base part of filesystem path, specified by setting 
+
+    { 
+        "modules" : { 
+                "VisualSnapshotSaverHttpInterface" : { 
+                    "path_find" : "path"
+                }
+        }
+    } 
+
+with path, specified by setting 
+
+The URL path is made by replacing base part of filesystem path, specified by setting 
+
+    { 
+        "modules" : { 
+                "VisualSnapshotSaverHttpInterface" : { 
+                    "path_replace" : "path"
+                }
+        }
+    }
+
+It is the opposite to what Web server does with a path, so configurations of VisualSnapshotSaverHttpInterface 
+and NGINX must be synchronized.
+
+Snapshot file name has form
+
+    date-time.jpg
+    
+where _date-time_ is UTC date and time of corresponding frame, represented according to ISO 8601, 
+with 3-digit milliseconds:
+
+    YYYY-MM-DDThh:mm:ss.sss
+    
+## Example
+
+Path remapping settings:
+
+    { 
+        "modules" : { 
+                "VisualSnapshotSaverHttpInterface" : { 
+                    "path_find" : /var/lib/awl-move/snapshots,
+                    "path_replace" : /snapshot_files
+                }
+        }
+    }
+
+NGINX configuration (relevant part):
+
+    server { 
+        location /snapshot_files { 
+            alias /var/lib/awl-move/snapshots; 
+        }
+    }
+    
+Then the snapshot
+
+    /var/lib/awl-move/snapshots/2012-06-20/2012-06-20T17:26:31.351.jpg
+    
+has URL
+
+    http://kiosk-1:8181/snapshot_files/2012-06-20/2012-06-20T17:26:31.351.jpg
+
++ Response 201 (application/json)
+
+ + Headers
+ 
+            Location: https://localhost:8182/snapshot_files/2012-09-18/2012-09-18T17:07:17.893.jpg
+
+ + Body
+ 
+            {
+                "path" : "/snapshot_files/2012-09-18/2012-09-18T17:07:17.893.jpg" 
+            }
+
+
+## Get current snapshot [/snapshots/current]
+
+### Get snapshot image of last input frame [GET]
+
+This resource provides the possibility to get snapshot image of input video stream.  
+Input video stream is the stream produced by input device. It does not have markup.
+Image has PNG format. The image size is original.
+
+# Response
+
+Body contains snapshot image in PNG format. Content-Type is image/png.
+
+
++ Response 200 (image/png)
+
+
+
+
+
+
+
+
+
+
+# Group Config
+
+This resource allows to get and set configuration.
+
+Configuration settings logically fall into two categories: **communication settings** and **engine settings**. 
+The **communication settings** include domain, password etc. The **engine settings** apply to main application functionality.
+
+    JSON data
+    {
+        "modules": [ module-list ]
+        "system": {
+            "web": [ parameter-list ],
+            "authorization": [ parameter-list ]
+        }
+    }
+
+The _module-list_ contains the list of application modules with their parameters.
+
+    module:
+        {
+            "name": {
+                "description": "description",
+                "parameters": [ parameter-list ]
+            }
+        }
+
+where
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Field</th>
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th>
+        <tr/>
+        
+        <tr><td>name</td>
+            <td>String</td>
+            <td>Module name.</td></tr>
+        <tr><td>description</td>
+            <td>String</td>
+            <td>Module description.</td></tr>
+    </tr>
+</table>
+
+Each _parameter_ in parameter-list has the following structure:
+
+    parameter:
+        {
+            "name": "name",
+            "display_name": "display_name",
+            "description": "description",
+            "type": "type",
+            "requires_restart": requires_restart,
+            "value": value
+        }
+        
+where
+
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Field</th>
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th>
+        <tr/> 
+        
+        <tr>
+            <td>name</td>
+            <td>String</td>
+            <td>Internal parameter name. It is the same as in configuration file.</td></tr>
+        <tr><td>display_name</td>
+            <td>String</td>
+            <td>Parameter name to display.</td></tr>
+        <tr><td>description</td>
+            <td>String</td>
+            <td>Parameter description. Can be empty.</td></tr>
+        
+        <tr><td>type</td>
+            <td>String</td> 
+            <td>
+                <table>
+                    <tr>
+                        <tr>
+                            <th bgcolor="#555555">Parameter type</th>
+                            <th bgcolor="#555555">Possible values are</th>
+                        </tr>
+                        
+                        <tr><td>int</td>
+                            <td>Integer number.</td></tr>
+                        <tr><td>real</td>
+                            <td>Real number.</td></tr>
+                        <tr><td>bool</td>
+                            <td>Boolean.</td></tr>
+                        <tr><td>string</td>
+                            <td>String.</td></tr>
+                        <tr><td>ipv4</td>
+                            <td>IPv4 address (dotted quad).</td></tr>
+                        <tr><td>map</td>
+                            <td>Map. The value of this type is an object. 
+                                Only object values can be changed. Keys cannot be removed or inserted.</td></tr>
+                    </tr>
+                </table>
+            </td> 
+        </tr>
+        
+        <tr><td>requires_restart</td>
+            <td>Boolean</td> 
+            <td>Specifies if changing value of this parameter requires engine restart.
+                This field can be absent in parameters that do not belong to modules 
+                (e.g. network configuration parameters).
+            </td></tr>
+        <tr><td>value</td>
+            <td>Depends on type</td>
+            <td>Parameter value.</td></tr>
+    </tr>
+</table>
+
+**Also unspecified fields can exist.**
+
+The _web_ key contains parameters specifying high-level communication options:
+
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Name</th>
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th>
+        <tr/> 
+        
+        <tr><td>domain</td>
+            <td>String</td>
+            <td>Fully qualified domain name of application host. 
+                This domain name must be specified in header field Host of API requests.</td></tr>
+        <tr><td>ssl_enabled</td>
+            <td>Bool</td>
+            <td>Specifies if SSL/TLS encryption is enabled.</td></tr>
+    </tr>
+</table>
+
+The _authorization_ key contains authorization parameters. Authorization is required for un-safe request methods (PUT). The parameters are:
+
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Name</th>
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th>
+        <tr/>
+        
+        <tr><td>password</td>
+            <td>String</td>
+            <td>Password.</td></tr>
+    </tr>
+</table>
+
+The value is empty string – it is write-only.
+
+The key _"modules"_ belong to engine settings, _"system"_ – to communication settings.
+
+MOVE has the following specific module parameters:
+
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Name</th>      
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th>
+            <th bgcolor="#555555">Requires restart</th>
+        <tr/> 
+        
+        <tr bgcolor="#999999">
+            <td colspan="4">VisualSnapshotSaver module</td>
+        </tr>
+        <tr><td>directory</td> 
+            <td>string</td>
+            <td>Path to directory to save images in</td>
+            <td>yes</td></tr>
+        <tr><td>width</td> 
+            <td>int</td>
+            <td>Image width</td>
+            <td>no</td></tr>
+        <tr><td>height</td> 
+            <td>int</td>
+            <td>Image height</td>
+            <td>no</td></tr>
+        <tr><td>quality</td> 
+            <td>int</td>
+            <td>JPEG compression quality</td>
+            <td>no</td></tr>
+        <tr><td>max_snapshots</td> 
+            <td>int</td>
+            <td>Maximum number of stored snapshots</td>
+            <td>no</td></tr>
+        
+        <tr bgcolor="#999999">
+            <td colspan="4">VisualSnapshotSaverHttpInterface module</td>
+        </tr>
+        <tr><td>path_find</td> 
+            <td>string</td>
+            <td>Base portion of snapshot's path to replace</td>
+            <td>no</td></tr>
+        <tr><td>path_replace</td> 
+            <td>Base path to replace with</td>
+            <td>string</td>
+            <td>no</td></tr>
+        
+        <tr bgcolor="#999999">
+            <td colspan="4">VideoWriter module</td>
+        </tr>
+        <tr><td>fourcc</td> 
+            <td>string</td>
+            <td>Format FourCC code</td>
+            <td>yes</td></tr>
+        <tr><td>fps</td> 
+            <td>real</td>
+            <td>FPS of output video file</td>
+            <td>yes</td></tr>
+        
+        <tr bgcolor="#999999">
+            <td colspan="4">JpegEncoder module</td>
+        </tr>
+        <tr><td>width</td> 
+            <td>int</td>
+            <td>Frame width</td>
+            <td>no</td></tr>
+        <tr><td>height</td> 
+            <td>int</td>
+            <td>Frame height</td>
+            <td>no</td></tr>
+        <tr><td>quality</td> 
+            <td>int</td>
+            <td>JPEG compression quality</td>
+            <td>no</td></tr>
+        
+        <tr bgcolor="#999999">
+            <td colspan="4">Tracker module</td></tr>
+        <tr><td>camera_altitude</td> 
+            <td>real</td>
+            <td>Camera altitude, m</td>
+            <td>yes</td></tr>
+        <tr><td>use_cuda</td> 
+            <td>bool</td>
+            <td>Use CUDA</td>
+            <td>yes</td></tr>
+        <tr><td>cuda_process_whole_frame</td> 
+            <td>bool</td>
+            <td>Analyze whole frame in CUDA mode</td>
+            <td>yes</td></tr>
+        <tr><td>use_tvl1</td> 
+            <td>bool</td>
+            <td>Use TV-L1 algorithm</td>
+            <td>yes</td></tr>
+        
+        <tr bgcolor="#999999">
+            <td colspan="4">TrackerDataService module</td>
+        </tr>
+        <tr><td>session_update_interval</td> 
+            <td>real</td>
+            <td>Interval between updates of last session time, sec.<br>
+                Last session time is stored in DB periodically to restore session end time 
+                in case of abnormal termination.</td>
+            <td>yes</td></tr>
+        <tr><td>update_interval</td> 
+            <td>real</td>
+            <td>Interval between data snapshots, sec.<br>
+                A snapshot consists of records for all users in the current frame.<br>
+                When user appears or leaves, the snapshot is stored regardless of interval 
+                and timer restarts from that moment. When user leaves, the snapshot for previous 
+                frame (last frame user was seen on) is also saved.</td>
+            <td>yes</td></tr>
+        
+        <tr bgcolor="#999999">
+            <td colspan="4">TrackerObjectVisualizer module</td>
+        </tr>
+        <tr><td>show_boxes</td> 
+            <td>bool</td>
+            <td>Show object boxes</td>
+            <td>yes</td></tr>
+    </tr>
+</table>
+
+
+## Current configuration [/config]
+
+### Get current configuration [GET]
+
++ Response 200 (application/json)
+ + Body
+ 
+            { 
+                "modules": { 
+                    "VisualSnapshotSaver": { 
+                        "description": "Creates snapshots (images) of input video stream.", 
+                        "parameters": [ 
+                            { 
+                                "description": "", 
+                                "display_name": "JPEG compression quality", 
+                                "internal": false, 
+                                "name": "quality", 
+                                "requires_restart": false, 
+                                "type": "int", 
+                                "value": 70, 
+                                "virtual": false 
+                            }
+                        ] 
+                    }
+                }, 
+                "system": { 
+                    "authorization": [ ], 
+                    "web": [ ] 
+                } 
+            } 
+
+### Set configuration [PUT]
+
+#Request
+
+The structure of data is the same as describe above, but certain parts may be absent.
+
+Any of the first-level keys (modules, system) may be absent.
+
+Some or all modules in _module-list_ may be absent. Each module must have the following minimal structure:
+
+    module:
+        {
+            "name": {
+                "parameters": [ parameter-list ]
+            }
+        }
+
+For modules, some or all parameters in each parameter-list may be absent.
+
+Each _parameter_ must have the following minimal structure:
+
+    parameter:
+        {
+            "name": "name",
+            "value": value,
+        }
+
+Any of the keys in _"system"_ (_web_, _authorization_) may be absent.
+
+It is forbidden to change communication settings together with engine settings in one API call. 
+The reason is that changing communication settings involves closing of network connection.
+
+# Response
+
+Certain engine settings require restart of engine and/or data service in order to apply them. 
+If the component is running and have to restart, response has body with JSON
+
+    { "restart": true }
+    
+Restart is performed automatically. Changing input device always requires restart of engine.
+
+If restart is not needed, OK response has no body.
+
+If communication settings are changes successfully, connection is closed and the client receives no response.
+
++ Request (application/json)
+ + Body
+    
+            { 
+                "modules": {
+                    "VisualSnapshotSaver": {
+                        "parameters": [ 
+                            {
+                                "name": "quality",
+                                "value": 85
+                            }
+                        ]
+                    } 
+                }, 
+                "system": { 
+                    "authorization": [ ], 
+                    "web": [ ] 
+                } 
+            }
+
++ Response 200
+
+
+
+
+
+
+
+
+
+
+# Group Data
+
+This resource allows to retrieve tracking data from current or previous sessions.
+
+
+## Tracking data [/data{?info,time,objects,lines,areas}]
+
+### Get tracking data [GET]
+
+There are two kinds of queries: **event query** and **state query**.
+
+**Event query** returns events occurred during period of time: object detected, object entered area sensor, etc. 
+The particular case of event is “object moved to certain position”; sequence of such events for an object 
+form this object's track.
+
+**State query** returns scene state at certain time moment: available objects, objects inside areas etc.
+
+Object positions are in screen coordinate system – origin is in left top corner.
+
+# Request
+
+## Query parameters
+
+Query parameters divide into **general parameters** and **entity filter parameters**.
+
+**General parameters** specify what kinds of information to get and for what time.
+
+**Entity filter parameters** specify filters on entities participating in query (objects, lines and areas). 
+If present, filters restrict returned data to correspond to specified entities.
+
+The **general parameters** are:
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Name</th>      
+            <th bgcolor="#555555">Description</th>
+        <tr/> 
+        
+        <tr><td>info</td> 
+            <td>What kinds of information to return.</td></tr>
+        <tr><td>time</td>
+            <td>Time period (for event query) or moment of time (for state query) to return data for.</td></tr>
+    </tr>
+</table>
+
+**General parameters** are common to event and state queries, but have different values. 
+They are described in detail below.
+
+The **entity filter parameters** are:
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Name</th>      
+            <th bgcolor="#555555">Description</th>
+            <th bgcolor="#555555">Applies to query types</th>
+        <tr/> 
+        
+        <tr><td>objects</td>
+            <td>Objects to return data for.</td>
+            <td>Event, state</td></tr>
+        <tr><td>lines</td>
+            <td>Line sensors to return data for.</td>
+            <td>Event</td></tr>
+        <tr><td>areas</td>
+            <td>Area sensors to return data for.</td>
+            <td>Event, state</td></tr>
+    </tr>
+</table>
+
+
+Since lines do not participate in **state queries**, lines filter is not applicable to them.
+
+Query can contain any set of (applicable) entity filters, but each filter can be specified only once.
+
+The format of every filter parameter value is comma-separated (without spaces) list of entity IDs.
+
+### General parameters of event query
+
+**info**
+
+The format of value is comma-separated list (without spaces) of requested kinds of information. 
+
+Possible list elements are:
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Name</th>      
+            <th bgcolor="#555555">Description</th>
+        <tr/> 
+        
+        <tr><td>dwell_events</td> 
+            <td>Events corresponding to dwelling of objects in scene: object detected, lost, exited, reentered.</td></tr>
+        <tr><td>tracks</td> 
+            <td>Track is a sequence of timestamped positions the object was detected in. 
+             An object may have several tracks if tracking was interrupted between.</td></tr>
+        <tr><td>line_events</td>
+            <td>Events of crossing defined line sensors by objects.</td></tr>
+        <tr><td>area_events</td>
+            <td>Events of entering/exiting area sensors by objects.</td></tr>
+    </tr>
+</table>
+
+**time**
+
+Time period to return data for.
+
+Two formats are possible:
+
+    time-time
+    time_str-time_str
+    
+where _time_ is ApiTime and _time_str_ is ApiTimeStr (see `Data types` header).
+
+### General parameters of state query
+
+**info**
+
+The format of value is comma-separated list (without spaces) of requested kinds of information.
+
+Possible list elements are:
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Name</th>      
+            <th bgcolor="#555555">Description</th>
+        <tr/> 
+        
+        <tr><td>objects</td>
+            <td>Return objects available in scene.</td></tr>
+        <tr><td>areas</td>
+            <td>Return which objects are inside which area sensors.</td></tr>
+        <tr><td>hidden_objects</td> 
+            <td>For internal using only. Return IDs of objects, that exit scene, but back-end save their for re-identification. 
+                Should be used only with time=now query.</td></tr>
+    </tr>
+</table>
+
+Only if areas information is queried, the query can contain areas entity filter.
+
+**time**
+
+Time moment to return data for.
+
+The value can specify a time as _ApiTime_ or _ApiTimeStr_, or be the special value `now`. 
+The latter can be used only in **_live mode_** and refers to most recent video frame. 
+
+The query using `now` is called **current state query**.
+
+
+# Response
+
+Response has **_JSON_** format.
+
+JSON data corresponding to event query has form
+
+    {
+        "dwell_events": [ dwell_event-list ],
+        "tracks": [ track-list ],
+        "line_events": [ line_event-list ],
+        "area_events": [ area_event-list ]
+    }
+    
+Each field corresponds to information kinds from query parameter info and is present only if requested.
+
+The field `dwell_events` contains list of object dwelling events occurred during specified time period.
+
+dwell_event:
+
+    {
+        "object": { "id": id },
+        "type": type,
+        "time": time
+    }
+where:
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Field</th>      
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th>
+        <tr/> 
+        
+        <tr><td>id</td>
+            <td>Integer</td>
+            <td>Object ID.</td></tr>
+        <tr><td>type</td> 
+            <td>Integer</td> 
+            <td>Event type. Possible values are:<br>
+                0 – detected,<br>
+                1 - lost.</td></tr>
+        <tr><td>time</td>
+            <td>ApiTime</td> <td>Event time.</td></tr>
+    </tr>
+</table>
+
+The field `tracks` contains list of object tracks (sequences of timestamped positions), 
+corresponding to time period specified in request.
+
+track:
+
+    {
+        "object": { "id": id },
+        "positions": [ position-list ]
+    }
+
+position:
+
+    {
+        "x": x,
+        "y": y,
+        "time": time
+    }
+where
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Field</th>      
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th>
+        <tr/> 
+        
+        <tr><td>id</td>
+            <td>Integer</td>
+            <td>Object ID.</td></tr>
+        <tr><td>x, y</td>
+            <td>Real</td>
+            <td>Position coordinates.</td></tr>
+        <tr><td>time</td>
+            <td>ApiTime</td> <td>Position timestamp.</td></tr>
+    </tr>
+</table>
+
+Time interval between position snapshots is specified by parameter `update_interval` of module TrackerDataService. 
+By default it is 1 second, currently.
+
+Timestamps of track's first and last positions can slightly differ from “detected” and “lost” event timestamps, respectively.
+
+The field `line_events` contains events of crossing defined line sensors by objects, occurred during time period 
+specified in request.
+
+line_event:
+
+    {
+        "line": {
+            "id": line_id,
+            "name": line_name
+        },
+        "direction": direction,
+        "object": { "id": object_id },
+        "time": time
+    }
+where
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Field</th>      
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th>
+        <tr/> 
+        
+        <tr><td>line_id</td>
+            <td>Integer</td>
+            <td>Line sensor ID.</td></tr>
+        <tr><td>line_name</td>
+            <td>String</td>
+            <td>Line sensor name.<br />
+                If name is not set yet, value is empty string.</td></tr>
+        <tr><td>direction</td> 
+            <td>Integer</td> 
+            <td>Direction in that the object crossed the line.<br>
+                Possible values are:<br>
+                0 – left to right,<br>
+                1 – right to left.</td></tr>
+        <tr><td>object_id</td>
+            <td>Integer</td>
+            <td>Object ID.</td> </tr>
+        <tr><td>time</td>
+            <td>ApiTime</td>
+            <td>Event time.</td></tr>
+    </tr>
+</table>
+
+The field `area_events` contains events of entering/exiting defined areas by objects, 
+occurred during time period specified in request.
+
+area_event:
+
+    {
+        "area": {
+            "id": area_id,
+            "name": area_name
+        },
+        "type": type,
+        "object": { "id": object_id },
+        "time": time
+    }
+where
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Field</th>      
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th>
+        <tr/> 
+        
+        <tr><td>area_id</td>
+            <td>Integer</td>
+            <td>Area sensor ID.</td></tr>
+        <tr><td>area_name</td> 
+            <td>String</td> 
+            <td>Area sensor name.<br>
+                If name is not set yet, value is empty string.</td></tr>
+        <tr><td>type</td> 
+            <td>Integer</td> 
+            <td>Event type. Possible values are:<br>
+                0 – object entered,<br>
+                1 – object exited.</td></tr>
+        <tr><td>object_id</td>
+            <td>Integer</td>
+            <td>Object ID.</td></tr>
+        <tr><td>time</td>
+            <td>ApiTime</td>
+            <td>Event time.</td></tr>
+    </tr>
+</table>
+
+
+JSON data corresponding to **state query** has form
+
+    {
+        "time": timestamp,
+        "objects": [ object_state-list ],
+        "areas": [ area_state-list ]
+    }
+where
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Field</th>      
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th>
+        <tr/> 
+        
+        <tr><td>timestamp</td> 
+            <td>ApiTime</td> 
+            <td>Timestamp of the frame the returned data corresponds to.<br>
+                Is present only in current state response.</td></tr>
+        <tr><td>objects, areas</td> 
+            <td></td> 
+            <td>Each field corresponds to information kinds from query parameter info and is present only if requested.</td></tr>
+    </tr>
+</table>
+
+
+The field `objects` contains objects available in scene at specified time moment, with their positions.
+
+object_state:
+
+    {
+        "id": id,
+        "camera_position": {"x": x, "y": y}
+    }
+where
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Field</th>      
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th>
+        <tr/> 
+        
+        <tr><td>id</td>
+            <td>Integer</td>
+            <td>Object ID.</td></tr>
+        <tr><td>camera_position</td>
+            <td></td>
+            <td>Object position on camera frame in pixels.</td></tr>
+        <tr><td>x, y</td>
+            <td>Real</td>
+            <td>Position coordinates.</td></tr>
+    </tr>
+</table>
+
+The field `areas` contains information on which objects are inside which area sensors. Only non-empty areas are specified.
+
+area_state:
+
+    {
+        "area": {
+            "id": area_id,
+            "name": area_name
+        },
+        "objects": [ object_id-list ]
+    }
+where
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Field</th>      
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th>
+        <tr/> 
+        
+        <tr><td>area_id</td>
+            <td>Integer</td>
+            <td>Area sensor ID.</td></tr>
+        <tr><td>area_name</td>
+            <td>String</td>
+            <td>Area sensor name.<br>
+                If name is not set yet, value is empty string.</td></tr>
+        <tr><td>object_id</td>
+            <td>Integer</td>
+            <td>ID of object inside area sensor.</td></tr>
+    </tr>
+</table>
+
+### Example 1
+
+Get current state of objects in scene and area sensors, i.e. which areas contain which objects.
+
+    Request
+    curl -k -X GET 'https://localhost:8184/data?info=objects,areas&time=now'
+    Response
+    { "time": 1362133259629,
+        "objects" : [
+            { "id" : 1,
+              "camera_position": { "x": 128.3843, "y": 564.988737 }
+            },
+            { "id" : 2,
+              "camera_position": { "x": 1074.95383, "y": 835.9836 }
+            },
+        ],
+        "areas": [
+            { "area": {
+                    "id": 1,
+                    "name": "Area 1"
+                },
+              "objects": [ 2 ]
+            }
+        ]
+    }
+
+### Example 2
+
+Calculate total dwell time for person with ID=2050. To do this one queries dwell events for this object for all time.
+
+    Request
+    curl -k -X GET 'https://localhost:8184/data?info=dwell_events&objects=2050'
+    Response
+    { "dwell_events" : [
+        { "object" : { "id" : 2050 },
+          "time" : 1362133184515,
+          "type" : 0
+        },
+        { "object" : { "id" : 2050 },
+          "time" : 1362133259629,
+          "type" : 1
+        }
+      ]
+    }
+    
+So the total dwell time is 1362133259629 - 1362133184515 = 75.114 sec.
+
+### Example 3
+
+Get area events for person with ID=2050 and area sensor with ID=3 for time period from 10:19:50 to 10:20:50, 2013-03-01. 
+
+    Request
+    curl -k -X GET 'https://localhost:8184/data?info=area_events&time=2013-03-01T10:19:50-2013-03-01T10:20:50&objects=2050&areas=3'
+    Response
+    { "area_events" : [
+        { "area" : {
+            "id" : 3,
+            "name": "Area 3"
+          },
+          "object" : { "id" : 2050 },
+          "time" : 1362133191338,
+          "type" : 1
+        },
+        { "area" : {
+            "id" : 3,
+            "name": "Area 3"
+          },
+          "object" : { "id" : 2050 },
+          "time" : 1362133249711,
+          "type" : 0
+        },
+        { "area" : {
+            "id" : 3,
+            "name": "Area 3"
+          },
+          "object" : { "id" : 2050 },
+          "time" : 1362133252015,
+          "type" : 1
+        }
+      ]
+    }
+    
+We can see that the person:
+
+1. visited the area twice in specified time period, 
+2. already was inside when period began (there is no first enter event).
+
+
++ Parameters
+    + info (required, string, `objects`)
+    
+        What kinds of information to return.  
+        List of comma-separated (without spaces) values  
+
+        + Values
+            + `dwell_events`
+            + `tracks`
+            + `line_events`
+            + `area_events`
+            + `objects`
+            + `areas`
+            + `hidden_objects`
+            
+    + time (required, string, `now`)
+    
+        Time period (for event query) or moment of time (for state query) to return data for.  
+        Possible formats(depends of `info` kinds) (here are time is ApiTime and time_str is ApiTimeStr ):
+        - time-time
+        - time_str-time_str
+        - time
+        - time_str
+        - now
+        
+    + objects (optional, list of comma-separated (without spaces) integers (object ID), `1,2,3,4`)
+        
+        Objects to return data for.
+        
+    + lines (optional, list of comma-separated (without spaces) integers (line ID), `2,3,5` )
+    
+        Line sensors to return data for.
+        
+    + areas (optional, list of comma-separated (without spaces) integers (area ID), `6,8` )
+    
+        Area sensors to return data for.
+    
+
++ Response 200 (application/json)
+ + Body
+ 
+            { "time": 1362133259629,
+                "objects" : [
+                    { "id" : 1,
+                      "camera_position": { "x": 128.3843, "y": 564.988737 }
+                    },
+                    { "id" : 2,
+                      "camera_position": { "x": 1074.95383, "y": 835.9836 }
+                    }
+                ]
+            }
+
+
+
+
+
+
+
+
+
+
+# Group Layout
+
+This resource provides the ability to get and set layout of sensors ( **lines** and **areas** ) and **tracker's special areas**.
+
+
+## Layout of sensors [/layout]
+
+**Lines** are line segments which generate events when crossed by tracked objects.
+
+One of line's end points is called **initial**, the other – **terminal**. 
+If we stand at initial point and look to terminal point, the segment will have **left** and **right** sides.
+
+Coordinates of end points are in screen coordinate system – origin is in left top corner.
+
+**Sensor area** is an area defined on video frame, which generates events when tracked objects come into and out of it.
+
+_Note_: **sensor areas** are not  **tracker's special areas**. **Sensor areas** can be referred to as simple _“areas”_.
+
+**Area** can consist of several blobs. **Areas** can intersect.
+
+**Lines** and **areas** are collectively named **_sensors_**.
+
+History of sensors and their events is preserved forever. 
+So sensors are divided into **active** and **inactive**. 
+**Active** are used in **live mode**. 
+A sensor which was active in some session, is called **used**. 
+A **used** sensor cannot be deleted, it can be deactivated instead. 
+An **inactive** sensor can be made active again.
+
+There is a **special kind of sensors** which can be used to distinguish some objects (for example, staff) 
+and exclude them from the further processing. 
+When an object falls into a special sensor (enter the area or cross the line), 
+it will be marked as **'special'** and will not be reported in any request anymore.
+
+The API allows creating equal sensors. 
+This is to support using one MOVE installation in different settings. 
+Potentially two settings (likely in the same room) might have sensors located at the same place, 
+but their events must not mix. 
+A client application should consider when to activate already existing inactive sensor and when to add new equally placed.
+
+**Tracker's special areas** are areas on video frame used by the tracker to reduce number of false detections.
+
+There are two kinds of special areas: **discovery** and **exclusion**.
+
+**Discovery area** is an area where objects are expected to enter and exit the scene. It is required. 
+
+**Exclusion area** is an area where no part of person body can ever reach. It is optional. 
+
+Both areas can consist of several blobs.
+
+Layout configuration is required to be valid [SVG](http://www.w3.org/TR/SVG11/) with several additional attributes 
+related to MOVE. Server can only modify MOVE attributes and leaves all other markup untouched.
+
+HTTP header _Content-Type_ for SVG is **image/svg+xml**.
+
+The svg element must have attribute **_xmlns:move="http://www.aware-live.com/namespaces/move"_**.
+
+Metadata for graphical objects is specified in element's attributes, prefixed with namespace move. For example:
+
+    <line move:object-type="line" move:id="1" move:active="true" move:special="false" />
+
+Common metadata attributes for sensors are
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Name</th>
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th>
+        <tr/> 
+        
+        <tr><td>id</td> 
+            <td>Integer</td> 
+            <td>Sensor ID.<br />
+                IDs are assigned by server.<br>
+                This attribute is read-only.</td></tr>
+        <tr><td>name</td>
+            <td>String</td>
+            <td>Sensor name.</td></tr>
+        <tr><td>active</td>
+            <td>Boolean</td>
+            <td>If the sensor is active.</td></tr>
+        <tr><td>special</td>
+            <td>Boolean</td>
+            <td>If the sensor is special.</td></tr>
+        <tr><td>used</td> 
+            <td>Boolean</td> 
+            <td>If the sensor is used.<br>
+                This attribute is read-only.</td></tr>
+        <tr><td>title</td> 
+            <td>String</td> 
+            <td>Deprecated.<br> 
+                As a workaround to support existing code, attribute title is handled as a synonym of move:name.
+                If any of them is specified, it is used as sensor name. 
+                If both are specified, value of move:name is used. 
+                Both are returned to client (with the same values).</td></tr>
+    </tr>
+</table>
+                        
+                       
+A **line** is specified by line element with attribute **_move:object-type=line_**.
+
+An **area** is specified by any element describing closed shape or path, and having attribute **_move:object-type=area_**.
+
+A (part of) **exclusion area** is specified by any element describing closed shape or path, 
+and having attribute move:object-type=exclusion.
+
+A (part of) **discovery area** is specified by any element describing closed shape or path, 
+and having attribute move:object-type=discovery.
+
+If a graphic object does not have information about color, it is not visualized.
+Current requirements to areas:
+- Area sensors and tracker areas must have no strokes (borders), or stroke must have the same color as fill color. 
+- Tracker areas (discovery and exclusion) must be blue (RGB 0x0000FF) and red (RGB 0xFF0000). 
+
+### Get layout [GET]
+
+# Response
+
+If layout is set, response body contains SVG image. Otherwise response has status 404 Not Found.
+
+The returned document is identical to that was previously set, except, possibly, for move: attributes.   
+Server adds **move:id**, **move:name**, **title**, **move:active**, **move:special** and **move:used** attributes 
+where absent, and fixes **move:used** if specified incorrectly. 
+The **move:name** and **title** attributes are included both, with same value, and even if sensor name is empty.
+
++ Response 200 (image/svg+xml)
+
+    + Body
+    
+                <?xml version='1.0' encoding='UTF-8' standalone='no'?>
+                <!-- Created with Inkscape (http://www.inkscape.org/) -->
+                <svg width="2048" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:move="http://www.aware-live.com/namespaces/move" height="1944" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:cc="http://creativecommons.org/ns#" sodipodi:docname="layout_answer.svg" id="svg3065" inkscape:version="0.48.3.1 r9886" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:svg="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape">
+                    <metadata id="metadata3071">
+                        <rdf:RDF>
+                        <cc:Work rdf:about="">
+                        <dc:format>image/svg+xml</dc:format>
+                        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+                        <dc:title/>
+                        </cc:Work>
+                        </rdf:RDF>
+                    </metadata>
+                    <defs id="defs3069"/>
+                    <sodipodi:namedview inkscape:zoom="0.34" objecttolerance="10" inkscape:window-x="65" inkscape:window-y="24" bordercolor="#666666" id="namedview3067" inkscape:pageopacity="0" guidetolerance="10" inkscape:window-maximized="1" pagecolor="#ffffff" inkscape:window-width="1855" showgrid="false" inkscape:cx="318.05699" inkscape:cy="949.89686" inkscape:window-height="1056" borderopacity="1" inkscape:pageshadow="2" gridtolerance="10" inkscape:current-layer="svg3065"/>
+                    <path move:object-type="discovery" inkscape:connector-curvature="0" style="fill:#0000ff;fill-opacity:1;stroke:none" id="path3893" d="m 1073.1452,37.4375 c -504.97539,0 -914.34366,409.33702 -914.34366,914.3125 0,504.9755 409.36827,914.3438 914.34366,914.3438 504.9755,0 914.3438,-409.3683 914.3438,-914.3438 0,-504.97548 -409.3683,-914.3125 -914.3438,-914.3125 z m 0,98.84375 c 450.3836,0 815.5001,365.08521 815.5,815.46875 0,450.3835 -365.1164,815.5 -815.5,815.5 -450.38345,0 -815.49991,-365.1165 -815.49991,-815.5 0,-450.38354 365.11646,-815.46875 815.49991,-815.46875 z"/>
+                    <path move:object-type="exclusion" inkscape:connector-curvature="0" style="fill:#ff0000;fill-opacity:1;stroke:none" id="rect3891" d="M 0,-14.40634 0,1944 l 2057.2812,0 0,-1958.40634 -2057.2812,0 z m 1072.9062,51.5 c 504.9755,0 914.3438,409.33702 914.3438,914.3125 0,504.97554 -409.3683,914.34384 -914.3438,914.34384 -504.97542,0 -914.34372,-409.3683 -914.34372,-914.34384 0,-504.97548 409.3683,-914.3125 914.34372,-914.3125 z"/>
+                    <path move:name="" move:used="true" title="" move:id="0" move:active="true" move:object-type="area" inkscape:connector-curvature="0" style="fill:#39ffbb;fill-opacity:1;stroke:none;opacity:1" id="path5220" d="M 546.64995,160.86457 -10.064159,984.50588 485.47258,1327.6898 1011.598,422.93229 z" move:special="false"/>
+                    <rect width="503.72632" move:name="" move:used="true" x="-408.88971" title="" y="1168.5729" move:id="1" move:active="true" height="315.64893" move:object-type="area" style="fill:#000000;fill-opacity:1;opacity:1" id="rect2995" transform="matrix(0.56247663,-0.82681319,0.80763113,0.58968802,0,0)" move:special="false"/>
+                    <path move:name="" move:used="true" title="" move:id="2" move:active="true" move:object-type="area" inkscape:connector-curvature="0" style="fill:#8eab63;fill-opacity:1;stroke:none" id="path3769" d="m 1283.893,924.79761 262.9385,136.47339 -416.08,623.8063 -283.80686,-147.3049 416.08026,-623.80611 z" move:special="false"/>
+                    <path move:name="" move:used="true" inkscape:transform-center-x="-54.98945" title="" inkscape:transform-center-y="-18.645564" move:id="3" move:active="true" move:object-type="area" inkscape:connector-curvature="0" style="fill:#6fb0bf;fill-opacity:1;stroke:none" id="path3865" d="m 1216.984,1065.3322 70.1431,152.8711 -216.8031,327.4082 -47.9884,-109.1396 z" move:special="false"/>
+                    <path move:name="" move:used="true" title="" move:id="4" move:active="true" move:object-type="area" inkscape:connector-curvature="0" style="fill:#bd8b59;fill-opacity:1;stroke:none" id="path3867" d="m 1461.6263,1178.7856 -181.3639,315.3932 38.8771,210.1552 41.5377,-92.154 115.3912,-300.8277 z" move:special="false"/>
+                    <path move:name="" move:used="true" title="" move:id="5" move:active="true" move:object-type="area" inkscape:connector-curvature="0" style="fill:#cfcd6c;fill-opacity:1;stroke:none" id="path3869" d="m 1543.2596,1168.722 -53.7198,133.1754 -49.8258,185.5505 3.3386,216.3916 108.3371,-152.0798 z" move:special="false"/>
+                    <path move:name="" move:used="true" title="" move:id="6" move:active="true" move:object-type="area" inkscape:connector-curvature="0" style="fill:#d300fa;fill-opacity:1;stroke:none;opacity:1" id="path5222" d="m 1584.1518,1089.0879 -1.0719,525.1744 237.9806,203.5333 -13.687,-615.5845 z" move:special="false"/>
+                    <line move:name="" move:used="true" title="" move:id="0" move:active="true" move:object-type="line" style="stroke:#ff0000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" id="line5240" y1="672.68164" x1="909.49493" y2="1249.0833" x2="549.56396" move:special="false"/>
+                    <line move:name="" move:used="true" inkscape:transform-center-x="-50.647989" title="" inkscape:transform-center-y="-1.077091e-05" move:id="1" move:active="true" move:object-type="line" style="stroke:#ff0000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" id="line5246" y1="1498.3209" x1="866.41718" y2="982.73773" x2="1139.7594" move:special="false"/>
+                    <line move:name="" move:used="true" title="" move:id="2" move:active="true" move:object-type="line" style="stroke:#ff0000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" id="line5248" y1="1612.812" x1="1037.4822" y2="1064.8942" x2="1337.8706" move:special="true"/>
+                </svg>
+
+
+### Set layout [PUT]
+
+Sensors, having ID specified, are updated.  
+Sensors, having no ID, are added (they must be active).  
+Existing unused sensors, not specified (by ID) in request, are deleted; subscriptions to them are also deleted.  
+If an updated object does not have move:name or title attribute, its name is not updated.  
+If a new object does not have move:active attribute, it is considered active.  
+If an updated object does not have move:special attribute, this attribute is not updated.  
+If a new object does not have move:updates attribute, it is considered non-special.  
+Attribute move:used is deleted without checking. Note that it is added again (with actual value) in response to GET.  
+If engine is running, it is stopped, and started again after operation.  
+Verification of request is done before stopping engine.  
+
+# Response
+
+If request has not passed verification, response is sent and engine is not stopped. 
+If request has passed verification, response is sent after attempt to apply configuration has completed 
+(this can result in 500 Internal Server Error). 
+Note that this is before starting engine, if it was stopped by this request.
+Possible errors, specific to this request:
+
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Status</th> 
+            <th bgcolor="#555555">Condition</th> 
+        </tr>
+        
+        <tr><td>400 Bad Request</td>
+            <td>XML is not well-formed.</td></tr>
+        <tr><td>400 Bad Request</td>
+            <td>A sensor has invalid ID.</td></tr>
+        <tr><td>400 Bad Request</td>
+            <td>Discovery area is absent.</td></tr>
+        <tr><td>409 Conflict</td>
+            <td>A used sensor is absent from request (attempt to delete used sensor).</td></tr>
+        <tr><td>409 Conflict</td>
+            <td>An unused sensor has attribute move:active="false" (attempt to turn unused sensor to inactive).</td></tr>
+    </tr>
+</table>
+
+**_Response does not have body_**.
+
+
++ Request 200 (image/svg+xml)
+
+    + Body
+    
+                <?xml version='1.0' encoding='UTF-8' standalone='no'?>
+                <!-- Created with Inkscape (http://www.inkscape.org/) -->
+                <svg width="2048" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:move="http://www.aware-live.com/namespaces/move" height="1944" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:cc="http://creativecommons.org/ns#" sodipodi:docname="layout_answer.svg" id="svg3065" inkscape:version="0.48.3.1 r9886" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:svg="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape">
+                    <metadata id="metadata3071">
+                        <rdf:RDF>
+                        <cc:Work rdf:about="">
+                        <dc:format>image/svg+xml</dc:format>
+                        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+                        <dc:title/>
+                        </cc:Work>
+                        </rdf:RDF>
+                    </metadata>
+                    <defs id="defs3069"/>
+                    <sodipodi:namedview inkscape:zoom="0.34" objecttolerance="10" inkscape:window-x="65" inkscape:window-y="24" bordercolor="#666666" id="namedview3067" inkscape:pageopacity="0" guidetolerance="10" inkscape:window-maximized="1" pagecolor="#ffffff" inkscape:window-width="1855" showgrid="false" inkscape:cx="318.05699" inkscape:cy="949.89686" inkscape:window-height="1056" borderopacity="1" inkscape:pageshadow="2" gridtolerance="10" inkscape:current-layer="svg3065"/>
+                    <path move:object-type="discovery" inkscape:connector-curvature="0" style="fill:#0000ff;fill-opacity:1;stroke:none" id="path3893" d="m 1073.1452,37.4375 c -504.97539,0 -914.34366,409.33702 -914.34366,914.3125 0,504.9755 409.36827,914.3438 914.34366,914.3438 504.9755,0 914.3438,-409.3683 914.3438,-914.3438 0,-504.97548 -409.3683,-914.3125 -914.3438,-914.3125 z m 0,98.84375 c 450.3836,0 815.5001,365.08521 815.5,815.46875 0,450.3835 -365.1164,815.5 -815.5,815.5 -450.38345,0 -815.49991,-365.1165 -815.49991,-815.5 0,-450.38354 365.11646,-815.46875 815.49991,-815.46875 z"/>
+                    <path move:object-type="exclusion" inkscape:connector-curvature="0" style="fill:#ff0000;fill-opacity:1;stroke:none" id="rect3891" d="M 0,-14.40634 0,1944 l 2057.2812,0 0,-1958.40634 -2057.2812,0 z m 1072.9062,51.5 c 504.9755,0 914.3438,409.33702 914.3438,914.3125 0,504.97554 -409.3683,914.34384 -914.3438,914.34384 -504.97542,0 -914.34372,-409.3683 -914.34372,-914.34384 0,-504.97548 409.3683,-914.3125 914.34372,-914.3125 z"/>
+                    <path move:name="" move:used="true" title="" move:id="0" move:active="true" move:object-type="area" inkscape:connector-curvature="0" style="fill:#39ffbb;fill-opacity:1;stroke:none;opacity:1" id="path5220" d="M 546.64995,160.86457 -10.064159,984.50588 485.47258,1327.6898 1011.598,422.93229 z" move:special="false"/>
+                    <rect width="503.72632" move:name="" move:used="true" x="-408.88971" title="" y="1168.5729" move:id="1" move:active="true" height="315.64893" move:object-type="area" style="fill:#000000;fill-opacity:1;opacity:1" id="rect2995" transform="matrix(0.56247663,-0.82681319,0.80763113,0.58968802,0,0)" move:special="false"/>
+                    <path move:name="" move:used="true" title="" move:id="2" move:active="true" move:object-type="area" inkscape:connector-curvature="0" style="fill:#8eab63;fill-opacity:1;stroke:none" id="path3769" d="m 1283.893,924.79761 262.9385,136.47339 -416.08,623.8063 -283.80686,-147.3049 416.08026,-623.80611 z" move:special="false"/>
+                    <path move:name="" move:used="true" inkscape:transform-center-x="-54.98945" title="" inkscape:transform-center-y="-18.645564" move:id="3" move:active="true" move:object-type="area" inkscape:connector-curvature="0" style="fill:#6fb0bf;fill-opacity:1;stroke:none" id="path3865" d="m 1216.984,1065.3322 70.1431,152.8711 -216.8031,327.4082 -47.9884,-109.1396 z" move:special="false"/>
+                    <path move:name="" move:used="true" title="" move:id="4" move:active="true" move:object-type="area" inkscape:connector-curvature="0" style="fill:#bd8b59;fill-opacity:1;stroke:none" id="path3867" d="m 1461.6263,1178.7856 -181.3639,315.3932 38.8771,210.1552 41.5377,-92.154 115.3912,-300.8277 z" move:special="false"/>
+                    <path move:name="" move:used="true" title="" move:id="5" move:active="true" move:object-type="area" inkscape:connector-curvature="0" style="fill:#cfcd6c;fill-opacity:1;stroke:none" id="path3869" d="m 1543.2596,1168.722 -53.7198,133.1754 -49.8258,185.5505 3.3386,216.3916 108.3371,-152.0798 z" move:special="false"/>
+                    <path move:name="" move:used="true" title="" move:id="6" move:active="true" move:object-type="area" inkscape:connector-curvature="0" style="fill:#d300fa;fill-opacity:1;stroke:none;opacity:1" id="path5222" d="m 1584.1518,1089.0879 -1.0719,525.1744 237.9806,203.5333 -13.687,-615.5845 z" move:special="false"/>
+                    <line move:name="" move:used="true" title="" move:id="0" move:active="true" move:object-type="line" style="stroke:#ff0000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" id="line5240" y1="672.68164" x1="909.49493" y2="1249.0833" x2="549.56396" move:special="false"/>
+                    <line move:name="" move:used="true" inkscape:transform-center-x="-50.647989" title="" inkscape:transform-center-y="-1.077091e-05" move:id="1" move:active="true" move:object-type="line" style="stroke:#ff0000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" id="line5246" y1="1498.3209" x1="866.41718" y2="982.73773" x2="1139.7594" move:special="false"/>
+                    <line move:name="" move:used="true" title="" move:id="2" move:active="true" move:object-type="line" style="stroke:#ff0000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" id="line5248" y1="1612.812" x1="1037.4822" y2="1064.8942" x2="1337.8706" move:special="true"/>
+                </svg>
+
++ Response 200
+
+
+
+
+
+
+
+
+
+
+# Group Line sensor subscribers
+
+This resource provides the ability to control **subscribers** to line ( `border`equivalent term ) events, which receive notifications 
+(HTTP requests) when events occur. 
+A subscriber can be subscribed to an explicitly specified set of active lines ( **explicit subscriber** ), 
+or implicitly to all active lines, including future ones ( **wildcard subscriber** ).
+
+A **subscriber** is defined by URL and HTTP method.  
+Subscriber:
+
+    {
+        "id": id,
+
+        "url_template": url_template,
+        "method": method,
+        "wildcard": wildcard,
+
+        "borders": [ border_id-list ]
+    }
+where
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Field</th> 
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th> 
+        </tr>
+        
+        <tr><td>id</td>
+            <td>Integer</td>
+            <td>Subscriber ID.<br>
+            This field is read-only.</td></tr>
+            
+        <tr><td>url_template</td>
+            <td>String</td>
+            <td>Template of URL which receives HTTP request on event.<br>
+                The template string contains placeholders for data describing event:<br>
+                
+                <table>
+                <tr><td>%border</td>
+                    <td>Border ID.</td></tr>
+                <tr><td>%direction</td>
+                    <td>Direction in which the object crossed the border.<br>
+                        Possible values are:<br>
+                        0 – left to right,<br>
+                        1 – right to left.</td></tr>
+                <tr><td>%object</td>
+                    <td>Object ID.</td></tr>
+                </table>
+                
+                <br>
+                Example:<br>
+                <STRONG>http://host/border_event.php?border=%border&direction=%direction&object=%object</STRONG></td></tr>
+                                
+        <tr><td>method</td>
+            <td>String</td>
+            <td>HTTP method used in request to subscriber on event.</td></tr>
+        <tr><td>wildcard</td>
+            <td>Boolean</td>
+            <td>If this is a wildcard subscriber.<br>
+                This attribute cannot be changed after subscriber is created.</td></tr>
+        <tr><td>borders</td>
+            <td>Array</td>
+            <td>IDs of borders whose events this subscriber is currently subscribed to, explicitly or implicitly.<br>
+                This field is an alternative access point to data available via 
+                resource /borders_api/subscribers/id/borders.</td></tr>
+    </tr>
+</table>
+                       
+The fields `url_template` and `method` constitute key subscriber data. If they are equal in two Subscriber objects, 
+these objects are considered equal.
+
+Any changes to borders and event subscribers can be made only when they are not used by running engine 
+( **live mode** ) or data service ( **historic mode** ), i. e. only in **idle mode**. 
+
+Requests for change not in idle mode are responded with status 409 Conflict.
+
+
+## Collection of all border event subscribers [/borders_api/subscribers]
+
+### Get subscribers and their subscriptions [GET]
+
+# Response
+
+## JSON data
+
+    [ Subscriber-list ]
+
++ Response 200 (application/json)
+
+    + Body
+    
+                [ 
+                    {
+                        "borders": [ 1, 2, 3 ],
+                        "id": 1,
+                        "method": "POST",
+                        "url_template": "http://localhost:8181/admin/events.php?border=%border&direction=%direction&object=%object",
+                        "wildcard": true
+                    },
+                    {
+                        "borders": [ 1, 3 ],
+                        "id": 2,
+                        "method": "POST",
+                        "url_template": "http://10.1.90.2/events.php?door=%border&direction=%direction&object=%object",
+                        "wildcard": false
+                    }
+                ]
+
+### Update collection of subscribers with their subscriptions [PUT]
+
+Existing subscribers, having equal counterparts among given, are updated as if individual PUT was called 
+for each of them; IDs are retained.  
+Existing subscribers having no equal counterparts among given, are deleted as if individual DELETE was called 
+for each of them.  
+New subscribers are added as if POST was called for each of them.
+
+# Request
+
+## JSON data
+
+    [ Subscriber-list ]
+
+Each new `Subscriber` object should not have field `id`. 
+Field `borders` may be absent; for **wildcard subscribers** it is ignored.
+
+# Response
+
+## JSON data
+
+    Array of IDs assigned to subscribers specified in request, in corresponding order.
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If request contains equal subscribers, the response status is 400 Bad Request.  
+If `wildcard` field is being updated, the response status is 409 Conflict.  
+If `borders` field in any subscriber contains an invalid border ID, response status is 400 Bad Request.  
+If `borders` field in any subscriber contains an ID of historic border, the response status is 409 Conflict.  
+
++ Request (application/json)
+
+    + Body
+
+                [ 
+                    {
+                        "id": 1,
+                        "method": "POST",
+                        "url_template": "http://localhost:8181/admin/events.php?border=%border&direction=%direction&object=%object"
+                    },
+                    {
+                        "method": "POST",
+                        "url_template": "http://10.1.90.2/events.php?door=%border&direction=%direction&object=%object",
+                        "wildcard": false
+                    }
+                ]
+
++ Response 200 (application/json)
+
+    + Body
+    
+            [ 1, 2 ]
+    
+### Add subscriber and, optionally, its subscriptions [POST]
+
+# Request
+
+## JSON data
+
+    Subscriber
+    
+The `Subscriber` object should not have field `id`.  
+Field `borders` may be absent. For **wildcard subscribers** this field is ignored.
+
+# Response
+
+## JSON data
+
+    { "id": id }
+    
+where `id` is ID assigned to created subscriber.
+
+In successful case the response status is 201 Created and Location header field contains URL of created subscriber.  
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If given subscriber is equal to an already existing, the response status is 303 See Other, 
+and Location header field contains URL of existing subscriber.  
+If `borders` field contains an invalid border ID, response status is 400 Bad Request.  
+If `borders` field contains an ID of historic border, the response status is 409 Conflict.  
+
++ Request (application/json)
+
+    + Body
+    
+            {
+                "method": "POST",
+                "url_template": "http://10.1.90.2/events.php?door=%border&direction=%direction&object=%object",
+                "wildcard": false,
+                "borders": [ 1, 3 ]
+            }
+            
++ Response 201 (application/json)
+
+    + Body
+    
+            { "id": 2 }
+            
+### Delete all subscribers with their subscriptions [DELETE]
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.
+
++ Response 200
+
+
+## Border event subscriber [/borders_api/subscribers/{id}]
+
+This resource represents subscriber with identifier `id` and, optionally, its subscriptions.
+
++ Parameters
+
+    + id (required, integer, `1`)
+    
+        ID assigned to subscriber
+        
+### Get subscriber and its subscriptions [GET]
+
+# Response
+
+## JSON data
+
+    Subscriber
+    
++ Response 200 (application/json)
+
+    + Body
+    
+                {
+                    "borders": [ 1, 2, 3 ],
+                    "id": 1,
+                    "method": "POST",
+                    "url_template": "http://localhost:8181/admin/events.php?border=%border&direction=%direction&object=%object",
+                    "wildcard": true
+                }
+                
+### Update subscriber and/or its subscriptions [PUT]
+
+# Request
+
+## JSON data
+
+    Subscriber
+    
+The `Subscriber` object should not have field `id`.  
+Field `borders` may be absent; for **wildcard subscribers** it is ignored.
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If a subscriber equal to given already exists, the response status is 303 See Other and Location header 
+field contains URL of the existing subscriber.  
+If `wildcard` field is being updated, the response status is 409 Conflict.  
+If `borders` field contains an invalid border ID, response status is 400 Bad Request.  
+If `borders` field contains an ID of historic border, the response status is 409 Conflict.
+
++ Request (application/json)
+
+    + Body
+    
+                {
+                "method": "POST",
+                "url_template": "http://10.1.90.2/events.php?door=%border&direction=%direction&object=%object",
+                "wildcard": false,
+                "borders": [ 1, 3 ]
+            }
+                
++ Response 200
+
+
+### Delete subscriber with its subscriptions [DELETE]
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.
+
++ Response 200
+
+
+## Collection of subscriptions - explicit or implicit - of subscriber [/borders_api/subscribers/{id}/borders]
+
+This resource represents collection of subscriptions (explicit or implicit) of subscriber with identifier `id`, 
+i. e. `borders` (their IDs) it is (currently) subscribed to.
+
++ Parameters
+
+    + id (required, integer, `1`)
+    
+        ID assigned to subscriber
+        
+### Get subscriber subscriptions [GET]
+
+# Response
+
+## JSON data
+
+    Array of IDs of borders the subscriber is (currently) subscribed to.
+    
++ Response 200 (application/json)
+
+    + Body
+    
+                [ 1, 2, 3 ]
+                
+### Update - replace - subscriptions of explicit subscriber [PUT]
+
+This method is not allowed for **wildcard subscribers**.
+
+# Request
+
+## JSON data
+
+    Array of IDs of borders the subscriber is subscribed to.
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If the subscriber is `wildcard`, the response status is 409 Conflict.  
+If array contains an invalid border ID, response status is 400 Bad Request.  
+If array contains an ID of historic border, the response status is 409 Conflict.
+
++ Request (application/json)
+
+    + Body
+    
+                [1, 2]
+                
++ Response 200
+
+
+### Add subscription to single border [POST]
+
+This method is not allowed for **wildcard subscribers**.
+
+# Request
+
+## JSON data
+
+    { "id": id }
+    
+where `id` is ID of border to subscribe to.
+
+# Response
+
+Response does not have body.
+
+In successful case the response status is 201 Created and Location header field contains URL of 
+created subscription (in the form /subscribers/id/borders/id).  
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If the subscriber is `wildcard`, the response status is 409 Conflict.  
+If given subscription already exists, the response status is 303 See Other, and Location header field 
+contains URL of existing subscription (in the form /subscribers/id/borders/id).  
+If border ID is invalid, response status is 400 Bad Request.  
+If border ID refers to historic border, the response status is 409 Conflict.  
+
++ Request (application/json)
+
+    + Body
+                
+                {"id": 2}
+                
++ Response 200
+
+### Delete all subscriber subscriptions [DELETE]
+
+This method is not allowed for **wildcard subscribers**.
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If the subscriber is `wildcard`, the response status is 409 Conflict.
+
++ Response 200
+
+
+## Subscription of subscriber [/borders_api/subscribers/{subscriber_id}/borders/{border_id}]
+
+This resource represents subscription of subscriber with `subscriber_id` to border with `border_id`.
+
++ Parameters
+
+    + subscriber_id (required, integer, `1`)
+    
+        ID assigned to subscriber
+        
+    + border_id (required, integer, `1`)
+    
+        ID assigned to border
+        
+### Delete the subscription [DELETE]
+
+This method is not allowed for **wildcard subscribers**.
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If the subscriber is `wildcard`, the response status is 409 Conflict.
+
++ Response 200
+
+
+
+
+
+
+
+
+
+
+# Group Area sensor subscribers
+
+This resource provides the ability to control **subscribers** to area ( `hotspot` equivalent term ) events, 
+which receive notifications (HTTP requests) when events occur. 
+A subscriber can be subscribed to an explicitly specified set of active areas ( **explicit subscriber** ), 
+or implicitly to all active areas, including future ones ( **wildcard subscriber** ).
+
+A **subscriber** is defined by URL and HTTP method.  
+Subscriber:
+
+    {
+        "id": id,
+
+        "url_template": url_template,
+        "method": method,
+        "wildcard": wildcard,
+
+        "hotspots": [ hotspot_id-list ]
+    }
+where
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Field</th> 
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th> 
+        </tr>
+        
+        <tr><td>id</td>
+            <td>Integer</td>
+            <td>Subscriber ID.<br>
+            This field is read-only.</td></tr>
+            
+        <tr><td>url_template</td>
+            <td>String</td>
+            <td>Template of URL which receives HTTP request on event.<br>
+                The template string contains placeholders for data describing event:<br>
+                
+                <table>
+                <tr><td>%hotspot</td>
+                    <td>Hot-spot ID.</td></tr>
+                <tr><td>%type</td>
+                    <td>Event type<br>
+                        Possible values are:<br>
+                        0 – object entered,<br>
+                        1 – object exited.</td></tr>
+                <tr><td>%object</td>
+                    <td>Object ID.</td></tr>
+                </table>
+                
+                <br>
+                Example:<br>
+                <STRONG>http://host/hotspot_event.php?hotspot=%hotspot&type=%type&object=%object</STRONG></td></tr>
+                                
+        <tr><td>method</td>
+            <td>String</td>
+            <td>HTTP method used in request to subscriber on event.</td></tr>
+        <tr><td>wildcard</td>
+            <td>Boolean</td>
+            <td>If this is a wildcard subscriber.<br>
+                This attribute cannot be changed after subscriber is created.</td></tr>
+        <tr><td>hotspots</td>
+            <td>Array</td>
+            <td>IDs of hotspots whose events this subscriber is currently subscribed to, explicitly or implicitly.<br>
+                This field is an alternative access point to data available via 
+                resource /hotspots_api/subscribers/id/hotspots.</td></tr>
+    </tr>
+</table>
+                       
+The fields `url_template` and `method` constitute key subscriber data. If they are equal in two Subscriber objects, 
+these objects are considered equal.
+
+Any changes to hotspots and event subscribers can be made only when they are not used by running engine 
+( **live mode** ) or data service ( **historic mode** ), i. e. only in **idle mode**. 
+
+Requests for change not in idle mode are responded with status 409 Conflict.
+
+
+## Collection of all hotspot event subscribers [/hotspots_api/subscribers]
+
+### Get subscribers and their subscriptions [GET]
+
+# Response
+
+## JSON data
+
+    [ Subscriber-list ]
+
++ Response 200 (application/json)
+
+    + Body
+    
+                [ 
+                    {
+                        "hotspots": [ 1, 2, 3 ],
+                        "id": 1,
+                        "method": "POST",
+                        "url_template": "http://localhost:8181/admin/events.php?hotspot=%hotspot&type=%type&object=%object",
+                        "wildcard": true
+                    },
+                    {
+                        "hotspots": [ 1, 3 ],
+                        "id": 2,
+                        "method": "POST",
+                        "url_template": "http://10.1.90.2/events.php?kiosk=%hotspot&type=%type&object=%object",
+                        "wildcard": false
+                    }
+                ]
+
+### Update collection of subscribers with their subscriptions [PUT]
+
+Existing subscribers, having equal counterparts among given, are updated as if individual PUT was called 
+for each of them; IDs are retained.  
+Existing subscribers having no equal counterparts among given, are deleted as if individual DELETE was called 
+for each of them.  
+New subscribers are added as if POST was called for each of them.
+
+# Request
+
+## JSON data
+
+    [ Subscriber-list ]
+
+Each new `Subscriber` object should not have field `id`. 
+Field `hotspots` may be absent; for **wildcard subscribers** it is ignored.
+
+# Response
+
+## JSON data
+
+    Array of IDs assigned to subscribers specified in request, in corresponding order.
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If request contains equal subscribers, the response status is 400 Bad Request.  
+If `wildcard` field is being updated, the response status is 409 Conflict.  
+If `hotspots` field in any subscriber contains an invalid hotspot ID, response status is 400 Bad Request.  
+If `hotspots` field in any subscriber contains an ID of historic hotspot, the response status is 409 Conflict.  
+
++ Request (application/json)
+
+    + Body
+
+                [ 
+                    {
+                        "id": 1,
+                        "method": "POST",
+                        "url_template": "http://localhost:8181/admin/events.php?hotspot=%hotspot&type=%type&object=%object"
+                    },
+                    {
+                        "method": "POST",
+                        "url_template": "http://10.1.90.2/events.php?kiosk=%hotspot&type=%type&object=%object",
+                        "wildcard": false
+                    }
+                ]
+
++ Response 200 (application/json)
+
+    + Body
+    
+            [ 1, 2 ]
+    
+### Add subscriber and, optionally, its subscriptions [POST]
+
+# Request
+
+## JSON data
+
+    Subscriber
+    
+The `Subscriber` object should not have field `id`.  
+Field `hotspots` may be absent. For **wildcard subscribers** this field is ignored.
+
+# Response
+
+## JSON data
+
+    { "id": id }
+    
+where `id` is ID assigned to created subscriber.
+
+In successful case the response status is 201 Created and Location header field contains URL of created subscriber.  
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If given subscriber is equal to an already existing, the response status is 303 See Other, 
+and Location header field contains URL of existing subscriber.  
+If `hotspots` field contains an invalid hotspot ID, response status is 400 Bad Request.  
+If `hotspots` field contains an ID of historic hotspot, the response status is 409 Conflict.  
+
++ Request (application/json)
+
+    + Body
+    
+            {
+                "method": "POST",
+                "url_template": "http://10.1.90.2/events.php?kiosk=%hotspot&type=%type&object=%object",
+                "wildcard": false,
+                "hotspots": [ 1, 3 ]
+            }
+            
++ Response 201 (application/json)
+
+    + Body
+    
+            { "id": 2 }
+            
+### Delete all subscribers with their subscriptions [DELETE]
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.
+
++ Response 200
+
+
+## Hotspot event subscriber [/hotspots_api/subscribers/{id}]
+
+This resource represents subscriber with identifier `id` and, optionally, its subscriptions.
+
++ Parameters
+
+    + id (required, integer, `1`)
+    
+        ID assigned to subscriber
+        
+### Get subscriber and its subscriptions [GET]
+
+# Response
+
+## JSON data
+
+    Subscriber
+    
++ Response 200 (application/json)
+
+    + Body
+    
+                {
+                    "hotspots": [ 1, 2, 3 ],
+                    "id": 1,
+                    "method": "POST",
+                    "url_template": "http://localhost:8181/admin/events.php?hotspot=%hotspot&type=%type&object=%object",
+                    "wildcard": true
+                }
+                
+### Update subscriber and/or its subscriptions [PUT]
+
+# Request
+
+## JSON data
+
+    Subscriber
+    
+The `Subscriber` object should not have field `id`.  
+Field `hotspots` may be absent; for **wildcard subscribers** it is ignored.
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If a subscriber equal to given already exists, the response status is 303 See Other and Location header 
+field contains URL of the existing subscriber.  
+If `wildcard` field is being updated, the response status is 409 Conflict.  
+If `hotspots` field contains an invalid hotspot ID, response status is 400 Bad Request.  
+If `hotspots` field contains an ID of historic hotspot, the response status is 409 Conflict.
+
++ Request (application/json)
+
+    + Body
+    
+                {
+                "method": "POST",
+                "url_template": "http://10.1.90.2/events.php?kiosk=%hotspot&type=%type&object=%object",
+                "wildcard": false,
+                "hotspots": [ 1, 3 ]
+            }
+                
++ Response 200
+
+
+### Delete subscriber with its subscriptions [DELETE]
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.
+
++ Response 200
+
+
+## Collection of subscriptions - explicit or implicit - of subscriber [/hotspots_api/subscribers/{id}/hotspots]
+
+This resource represents collection of subscriptions (explicit or implicit) of subscriber with identifier `id`, 
+i. e. `hotspots` (their IDs) it is (currently) subscribed to.
+
++ Parameters
+
+    + id (required, integer, `1`)
+    
+        ID assigned to subscriber
+        
+### Get subscriber subscriptions [GET]
+
+# Response
+
+## JSON data
+
+    Array of IDs of hotspots the subscriber is (currently) subscribed to.
+    
++ Response 200 (application/json)
+
+    + Body
+    
+                [ 1, 2, 3 ]
+                
+### Update - replace - subscriptions of explicit subscriber [PUT]
+
+This method is not allowed for **wildcard subscribers**.
+
+# Request
+
+## JSON data
+
+    Array of IDs of hotspots the subscriber is subscribed to.
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If the subscriber is `wildcard`, the response status is 409 Conflict.  
+If array contains an invalid hotspot ID, response status is 400 Bad Request.  
+If array contains an ID of historic hotspot, the response status is 409 Conflict.
+
++ Request (application/json)
+
+    + Body
+    
+                [1, 2]
+                
++ Response 200
+
+
+### Add subscription to single hotspot [POST]
+
+This method is not allowed for **wildcard subscribers**.
+
+# Request
+
+## JSON data
+
+    { "id": id }
+    
+where `id` is ID of hotspot to subscribe to.
+
+# Response
+
+Response does not have body.
+
+In successful case the response status is 201 Created and Location header field contains URL of 
+created subscription (in the form /subscribers/id/hotspots/id).  
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If the subscriber is `wildcard`, the response status is 409 Conflict.  
+If given subscription already exists, the response status is 303 See Other, and Location header field 
+contains URL of existing subscription (in the form /subscribers/id/hotspots/id).  
+If hotspot ID is invalid, response status is 400 Bad Request.  
+If hotspot ID refers to historic hotspot, the response status is 409 Conflict.  
+
++ Request (application/json)
+
+    + Body
+                
+                {"id": 2}
+                
++ Response 200
+
+### Delete all subscriber subscriptions [DELETE]
+
+This method is not allowed for **wildcard subscribers**.
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If the subscriber is `wildcard`, the response status is 409 Conflict.
+
++ Response 200
+
+
+## Subscription of subscriber [/hotspots_api/subscribers/{subscriber_id}/hotspots/{hotspot_id}]
+
+This resource represents subscription of subscriber with `subscriber_id` to hotspot with `hotspot_id`.
+
++ Parameters
+
+    + subscriber_id (required, integer, `1`)
+    
+        ID assigned to subscriber
+        
+    + hotspot_id (required, integer, `1`)
+    
+        ID assigned to hotspot
+        
+### Delete the subscription [DELETE]
+
+This method is not allowed for **wildcard subscribers**.
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If the subscriber is `wildcard`, the response status is 409 Conflict.
+
++ Response 200
