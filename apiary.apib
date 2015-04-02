@@ -188,6 +188,40 @@ This document uses two conventional data types.
 </table>
 
 
+# Remote access
+
+Remote access can be done by several ways.
+
+## Local access http://localhost:8081
+
+With this method you have full access to any http resource and method, for example:
+
+- curl -X GET http://localhost:8081/state
+- curl -X PUT http://localhost:8081/state
+
+## HTTPS access with autenthication https://< remote_ip >:8182
+
+In this case you can use only GET HTTP method and any resource without autenthication, all
+other only with autenthication, for example:
+
+- curl -X GET https://< remote_ip >:8182/state
+- curl -u user:password -X PUT https://< remote_ip >:8182/state
+
+where < remote_ip > is IP of "Move" host.
+
+ 
+# WebSocket access
+
+Throught websocket you can be notified about current state in each frame.  
+The url is 
+
+    ws://< remote_ip >:8082
+where < remote_ip > is IP of "Move" host.  
+
+Message has json structure similar to response of http request **/data?info=< all possible fields >&time=now**.  
+See detail description of such json structure in [Data](http://docs.move.apiary.io/#reference/data).
+
+
 
 
 
