@@ -222,6 +222,118 @@ Message has json structure similar to response of http request **/data?info=< al
 See detail description of such json structure in [Data](http://docs.move.apiary.io/#reference/data).
 
 
+# Docker container
+
+Please, go through all links and read carefully all link`s content.
+
+1. [Install docker]( https://docs.docker.com/installation/ubuntulinux/ )
+
+2. Load docker image
+
+        docker load -i docker_move_<version>.tar
+        
+3. [Configure docker to access the Docker daemon remotely.]( https://docs.docker.com/reference/commandline/cli/#daemon-socket-option )
+
+    [Beware that the default setup provides un-encrypted and un-authenticated direct access to the Docker daemon - and should be secured either using the built in HTTPS encrypted  socket, or by putting a secure web proxy in front of it(for example, nginx).]( https://docs.docker.com/articles/security/#docker-daemon-attack-surface )
+
+4. HTTPS encrypted socket.
+
+    [If you wish to use HTTPS then follow next steps]( https://docs.docker.com/articles/https/ ) 
+    and reconfigure docker. After keys and certificates generating instead of start docker by command
+   
+        $ docker -d --tlsverify --tlscacert=ca.pem --tlscert=server-cert.pem --tlskey=server-key.pem -H 0.0.0.0:2376"
+          
+    use next steps:  
+    
+ 4.1. Open and edit /etc/default/docker. Add string
+       
+            ' DOCKER_OPTS="--tlsverify --tlscacert=<full_path_to>/ca.pem --tlscert=<full_path_to>/server-cert.pem --tlskey=<full_path_to>/server-key.pem -H 0.0.0.0:2376 -H unix:///var/run/docker.sock" '
+             
+    or
+             
+            ' DOCKER_OPTS="--tlsverify --tlscacert=<full_path_to>/ca.pem --tlscert=<full_path_to>/server-cert.pem --tlskey=<full_path_to>/server-key.pem -H <certain_ip>:2376 -H unix:///var/run/docker.sock" '
+             
+ 4.2. Restart docker
+             sudo service docker restart
+     
+   Now you have both HTTPS and unix socket(docker command prompt).
+   
+   [Do not forget protect access to ca.pem, client-cert.pem, client-key.pem, because owner has access to full docker API.]( https://docs.docker.com/articles/security/#docker-daemon-attack-surface )
+ 
+5. Use secure web proxy in front of docker(for example, nginx), if you wish authenticated connection.
+
+6. [Through remote HTTP connection we can control container life cycle]( https://docs.docker.com/reference/api/docker_remote_api_v1.17/ )
+
+ 6.1 Move container control
+   
+  6.1.1 Create  container
+  
+         curl --cert cert.pem --key key.pem --cacert ca.pem -H "Content-Type: application/json" \
+         -X POST 'https://<docker_ip>:2376/containers/create?name=<container_name>' \
+         -d '{ "Cmd": [ "/opt/move/awl-moved-wrapper_<type>.sh", "e --mode=live -c <camera_url>" ], "Image": "lokawarelive/docker_move", "HostConfig": { "PortBindings": { "8082/tcp": [{ "HostPort": "<websocket_shared_host_port>" }], "8182/tcp": [{ "HostPort": "<move_shared_host_port>" }] } } }' \
+         -D -
+         
+    where < docker_ip > is host IP  
+    where < type > is
+    - "no_vis_gv" - visualization and mockup snapshot are disabled, using GeoVision camera
+    - "no_vis_sa" - visualization and mockup snapshot are disabled, using Samsung camera
+    - "vis_gv"    - full Move functionality, using GeoVision camera
+    - "vis_sa"    - full Move functionality, using Samsung camera
+    
+    where < websocket_shared_host_port > is a websocket port for this container, unique one for your host  
+    where < move_shared_host_port > is a port for this container, unique one for your host
+     
+  6.1.2 Start container
+     
+        curl --cert cert.pem --key key.pem --cacert ca.pem -X POST 'https://<docker_ip>:2376/containers/<container_id>/start' -D -
+         
+  6.1.3 Stop container
+         
+        curl --cert cert.pem --key key.pem --cacert ca.pem -X POST 'https://<docker_ip>:2376/containers/<container_id>/stop' -D -
+         
+  6.1.4 Kill container
+         
+        curl --cert cert.pem --key key.pem --cacert ca.pem -X POST 'https://<docker_ip>:2376/containers/<container_id>/kill' -D - 
+         
+  6.1.5 Remove container
+     
+        curl --cert cert.pem --key key.pem --cacert ca.pem -X DELETE 'https://<docker_ip>:2376/containers/<container_id>' -D -
+   
+ 6.2 SSH container access.
+   
+ Only locally from host you can get container SSH access.  
+ First of all, find <container_ip>:
+ 
+        docker inspect --format='{{.NetworkSettings.IPAddress}}' <container_id>
+        
+ Then you can use SSH:
+ 
+        ssh root@<container_ip> -i < docker_move_container_key >
+   
+ 6.3 Move access.
+ 
+        curl -X GET https://<docker_ip>:<move_shared_host_port>/state -k -D - 
+        curl -u < login >:< password > -X PUT https://<docker_ip>:<move_shared_host_port>/layout -k -D - -T layout.svg
+        curl -u < login >:< password > -X PUT https://<docker_ip>:<move_shared_host_port>/state  -k -D - -d '{ "data_service" : "running", "engine" : "running" }'
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
