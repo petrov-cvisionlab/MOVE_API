@@ -209,20 +209,99 @@ other only with autenthication, for example:
 
 where < remote_ip > is IP of "Move" host.
 
- 
+
 # WebSocket access
 
-Throught websocket you can be notified about current state in each frame.  
-The url is 
+Move supports websocket protocol.
+It`s main path is:
 
-    ws://< remote_ip >:8082
-where < remote_ip > is IP of "Move" host.  
+    ws://< remote_ip >:8082/< resource >
+    
+where 
+ - < remote_ip > is IP of "Move" host
+ - < resource > : **_/now_** or **_/supermove_**
+ 
+## Get "now state" data
 
-Message has json structure similar to response of http request **/data?info=< all possible fields >&time=now**.  
+Use for it **_/now"_** resource.  
+Message output has json structure similar to response of http request **/data?info=< all possible fields >&time=now**.  
 See detail description of such json structure in [Data](http://docs.move.apiary.io/#reference/data).
 
+## Get "supermove now" state data ()
 
-# Docker container
+Use for it **_/supermove_**
+
+Message output has next json structure:
+
+    {
+        "time": <time>,
+        "session_id": <session_id>,
+        "objects": [object-list],
+        "hidden_objects": [hidden_object_id-list]
+    },
+    object:
+    {
+        "id" : <id>,
+        "camera_position" : {
+            "x" : <x>,
+            "y" : <y>
+        }
+    }
+
+Message fields:
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Field</th>
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th>
+        </tr>
+        
+        <tr><td>time</td> 
+            <td>ApiTime</td> 
+            <td>Message timestamp</td>
+        </tr>
+        <tr><td>session_id</td> 
+            <td>Integer</td> 
+            <td>Current Move session ID</td>
+        </tr>
+        <tr><td>hidden_object_id</td> 
+            <td>Integer</td> 
+            <td>Hidden object ID</td>
+        </tr>
+        <tr><td>id</td>
+            <td>Integer</td>
+            <td>Object ID</td>
+        </tr>
+        <tr><td>x,y</td> 
+            <td>Double</td> 
+            <td>Position coordinates.</td>
+        </tr>
+    </tr>
+</table>
+
+Example:
+
+    {
+        "time": 1362133259629,
+        "objects" : [
+            {
+                "id" : 1,
+                "camera_position": { "x": 128.3843, "y": 564.988737 }
+            },
+            {
+                "id" : 2,
+                "camera_position": { "x": 1074.95383, "y": 835.9836 }
+            }
+        ],
+        "hidden_objects" : [
+            3,
+            4
+        ]
+    }
+
+
+d# Docker container
 
 Please, go through all links and read carefully all link`s content.
 
@@ -2017,9 +2096,6 @@ Possible list elements are:
             <td>Return objects available in scene.</td></tr>
         <tr><td>areas</td>
             <td>Return which objects are inside which area sensors.</td></tr>
-        <tr><td>hidden_objects</td> 
-            <td>For internal using only. Return IDs of objects, that exit scene, but back-end save their for re-identification. 
-                Should be used only with time=now query.</td></tr>
     </tr>
 </table>
 
