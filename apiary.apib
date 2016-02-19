@@ -227,78 +227,16 @@ Use for it **_/now"_** resource.
 Message output has json structure similar to response of http request **/data?info=< all possible fields >&time=now**.  
 See detail description of such json structure in [Data](http://docs.move.apiary.io/#reference/data).
 
-## Get Supermove Now state data
+## Get Supermove Now state data ( Service information )
 
-Use for it **_/supermove_**
+Output binary format - array per double(64 bit):
 
-Message output has next json structure:
-
-    {
-        "time": <time>,
-        "session_id": <session_id>,
-        "objects": [object-list],
-        "hidden_objects": [hidden_object_id-list]
-    },
-    object:
-    {
-        "id" : <id>,
-        "camera_position" : {
-            "x" : <x>,
-            "y" : <y>
-        }
-    }
-
-Message fields:
-<table>
-    <tr>
-        <tr> 
-            <th bgcolor="#555555">Field</th>
-            <th bgcolor="#555555">Type</th>
-            <th bgcolor="#555555">Description</th>
-        </tr>
-        
-        <tr><td>time</td> 
-            <td>ApiTime</td> 
-            <td>Message timestamp</td>
-        </tr>
-        <tr><td>session_id</td> 
-            <td>Integer</td> 
-            <td>Current Move session ID</td>
-        </tr>
-        <tr><td>hidden_object_id</td> 
-            <td>Integer</td> 
-            <td>Hidden object ID</td>
-        </tr>
-        <tr><td>id</td>
-            <td>Integer</td>
-            <td>Object ID</td>
-        </tr>
-        <tr><td>x,y</td> 
-            <td>Double</td> 
-            <td>Position coordinates.</td>
-        </tr>
-    </tr>
-</table>
-
-Example:
-
-    {
-        "time": 1362133259629,
-        "objects" : [
-            {
-                "id" : 1,
-                "camera_position": { "x": 128.3843, "y": 564.988737 }
-            },
-            {
-                "id" : 2,
-                "camera_position": { "x": 1074.95383, "y": 835.9836 }
-            }
-        ],
-        "hidden_objects" : [
-            3,
-            4
-        ]
-    }
+        64         64        64      3*64           3*64        64          64 64 64
+    session_id,timestamp,obj_count,obj(id,x,y),...obj(id,x,y),hid_obj_count,id,id,id
+    
+Minimal length is 4*64 = 32 bytes ( __session_id__, __timestamp__, __obj_count__ and __hid_obj_count__ ).  
+If __obj_count__ = 0 then there are no any 3*64 fields.  
+If __hid_obj_count__ then there are no any 64 fields after __hid_obj_count__.  
 
 
 # Docker container
