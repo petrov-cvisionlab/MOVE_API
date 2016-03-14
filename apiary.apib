@@ -2630,4 +2630,933 @@ Sensors, having no ID, are added (they must be active).
 Existing unused sensors, not specified (by ID) in request, are deleted; subscriptions to them are also deleted.  
 If an updated object does not have move:name or title attribute, its name is not updated.  
 If a new object does not have move:active attribute, it is considered active.  
-If an updated object does not have move:special attr
+If an updated object does not have move:special attribute, this attribute is not updated.  
+If a new object does not have move:updates attribute, it is considered non-special.  
+Attribute move:used is deleted without checking. Note that it is added again (with actual value) in response to GET.  
+If engine is running, it is stopped, and started again after operation.  
+Verification of request is done before stopping engine.  
+
+# Response
+
+If request has not passed verification, response is sent and engine is not stopped. 
+If request has passed verification, response is sent after attempt to apply configuration has completed 
+(this can result in 500 Internal Server Error). 
+Note that this is before starting engine, if it was stopped by this request.
+Possible errors, specific to this request:
+
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Status</th> 
+            <th bgcolor="#555555">Condition</th> 
+        </tr>
+        
+        <tr><td>400 Bad Request</td>
+            <td>XML is not well-formed.</td></tr>
+        <tr><td>400 Bad Request</td>
+            <td>A sensor has invalid ID.</td></tr>
+        <tr><td>400 Bad Request</td>
+            <td>Discovery area is absent.</td></tr>
+        <tr><td>409 Conflict</td>
+            <td>A used sensor is absent from request (attempt to delete used sensor).</td></tr>
+        <tr><td>409 Conflict</td>
+            <td>An unused sensor has attribute move:active="false" (attempt to turn unused sensor to inactive).</td></tr>
+    </tr>
+</table>
+
+**_Response does not have body_**.
+
+
++ Request 200 (image/svg+xml)
+
+    + Body
+    
+                <?xml version='1.0' encoding='UTF-8' standalone='no'?>
+                <!-- Created with Inkscape (http://www.inkscape.org/) -->
+                <svg width="2048" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:move="http://www.aware-live.com/namespaces/move" height="1944" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:cc="http://creativecommons.org/ns#" sodipodi:docname="layout_answer.svg" id="svg3065" inkscape:version="0.48.3.1 r9886" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:svg="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape">
+                    <metadata id="metadata3071">
+                        <rdf:RDF>
+                        <cc:Work rdf:about="">
+                        <dc:format>image/svg+xml</dc:format>
+                        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+                        <dc:title/>
+                        </cc:Work>
+                        </rdf:RDF>
+                    </metadata>
+                    <defs id="defs3069"/>
+                    <sodipodi:namedview inkscape:zoom="0.34" objecttolerance="10" inkscape:window-x="65" inkscape:window-y="24" bordercolor="#666666" id="namedview3067" inkscape:pageopacity="0" guidetolerance="10" inkscape:window-maximized="1" pagecolor="#ffffff" inkscape:window-width="1855" showgrid="false" inkscape:cx="318.05699" inkscape:cy="949.89686" inkscape:window-height="1056" borderopacity="1" inkscape:pageshadow="2" gridtolerance="10" inkscape:current-layer="svg3065"/>
+                    <path move:object-type="discovery" inkscape:connector-curvature="0" style="fill:#0000ff;fill-opacity:1;stroke:none" id="path3893" d="m 1073.1452,37.4375 c -504.97539,0 -914.34366,409.33702 -914.34366,914.3125 0,504.9755 409.36827,914.3438 914.34366,914.3438 504.9755,0 914.3438,-409.3683 914.3438,-914.3438 0,-504.97548 -409.3683,-914.3125 -914.3438,-914.3125 z m 0,98.84375 c 450.3836,0 815.5001,365.08521 815.5,815.46875 0,450.3835 -365.1164,815.5 -815.5,815.5 -450.38345,0 -815.49991,-365.1165 -815.49991,-815.5 0,-450.38354 365.11646,-815.46875 815.49991,-815.46875 z"/>
+                    <path move:object-type="exclusion" inkscape:connector-curvature="0" style="fill:#ff0000;fill-opacity:1;stroke:none" id="rect3891" d="M 0,-14.40634 0,1944 l 2057.2812,0 0,-1958.40634 -2057.2812,0 z m 1072.9062,51.5 c 504.9755,0 914.3438,409.33702 914.3438,914.3125 0,504.97554 -409.3683,914.34384 -914.3438,914.34384 -504.97542,0 -914.34372,-409.3683 -914.34372,-914.34384 0,-504.97548 409.3683,-914.3125 914.34372,-914.3125 z"/>
+                    <path move:name="" move:used="true" title="" move:id="0" move:active="true" move:object-type="area" inkscape:connector-curvature="0" style="fill:#39ffbb;fill-opacity:1;stroke:none;opacity:1" id="path5220" d="M 546.64995,160.86457 -10.064159,984.50588 485.47258,1327.6898 1011.598,422.93229 z" move:special="false"/>
+                    <rect width="503.72632" move:name="" move:used="true" x="-408.88971" title="" y="1168.5729" move:id="1" move:active="true" height="315.64893" move:object-type="area" style="fill:#000000;fill-opacity:1;opacity:1" id="rect2995" transform="matrix(0.56247663,-0.82681319,0.80763113,0.58968802,0,0)" move:special="false"/>
+                    <path move:name="" move:used="true" title="" move:id="2" move:active="true" move:object-type="area" inkscape:connector-curvature="0" style="fill:#8eab63;fill-opacity:1;stroke:none" id="path3769" d="m 1283.893,924.79761 262.9385,136.47339 -416.08,623.8063 -283.80686,-147.3049 416.08026,-623.80611 z" move:special="false"/>
+                    <path move:name="" move:used="true" inkscape:transform-center-x="-54.98945" title="" inkscape:transform-center-y="-18.645564" move:id="3" move:active="true" move:object-type="area" inkscape:connector-curvature="0" style="fill:#6fb0bf;fill-opacity:1;stroke:none" id="path3865" d="m 1216.984,1065.3322 70.1431,152.8711 -216.8031,327.4082 -47.9884,-109.1396 z" move:special="false"/>
+                    <path move:name="" move:used="true" title="" move:id="4" move:active="true" move:object-type="area" inkscape:connector-curvature="0" style="fill:#bd8b59;fill-opacity:1;stroke:none" id="path3867" d="m 1461.6263,1178.7856 -181.3639,315.3932 38.8771,210.1552 41.5377,-92.154 115.3912,-300.8277 z" move:special="false"/>
+                    <path move:name="" move:used="true" title="" move:id="5" move:active="true" move:object-type="area" inkscape:connector-curvature="0" style="fill:#cfcd6c;fill-opacity:1;stroke:none" id="path3869" d="m 1543.2596,1168.722 -53.7198,133.1754 -49.8258,185.5505 3.3386,216.3916 108.3371,-152.0798 z" move:special="false"/>
+                    <path move:name="" move:used="true" title="" move:id="6" move:active="true" move:object-type="area" inkscape:connector-curvature="0" style="fill:#d300fa;fill-opacity:1;stroke:none;opacity:1" id="path5222" d="m 1584.1518,1089.0879 -1.0719,525.1744 237.9806,203.5333 -13.687,-615.5845 z" move:special="false"/>
+                    <line move:name="" move:used="true" title="" move:id="0" move:active="true" move:object-type="line" style="stroke:#ff0000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" id="line5240" y1="672.68164" x1="909.49493" y2="1249.0833" x2="549.56396" move:special="false"/>
+                    <line move:name="" move:used="true" inkscape:transform-center-x="-50.647989" title="" inkscape:transform-center-y="-1.077091e-05" move:id="1" move:active="true" move:object-type="line" style="stroke:#ff0000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" id="line5246" y1="1498.3209" x1="866.41718" y2="982.73773" x2="1139.7594" move:special="false"/>
+                    <line move:name="" move:used="true" title="" move:id="2" move:active="true" move:object-type="line" style="stroke:#ff0000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" id="line5248" y1="1612.812" x1="1037.4822" y2="1064.8942" x2="1337.8706" move:special="true"/>
+                </svg>
+
++ Response 200
+
+
+
+
+
+
+
+
+
+
+# Group Line sensor subscribers
+
+This resource provides the ability to control **subscribers** to line ( `border`equivalent term ) events, which receive notifications 
+(HTTP requests) when events occur. 
+A subscriber can be subscribed to an explicitly specified set of active lines ( **explicit subscriber** ), 
+or implicitly to all active lines, including future ones ( **wildcard subscriber** ).
+
+A **subscriber** is defined by URL and HTTP method.  
+Subscriber:
+
+    {
+        "id": id,
+
+        "url_template": url_template,
+        "method": method,
+        "wildcard": wildcard,
+
+        "borders": [ border_id-list ]
+    }
+where
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Field</th> 
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th> 
+        </tr>
+        
+        <tr><td>id</td>
+            <td>Integer</td>
+            <td>Subscriber ID.<br>
+            This field is read-only.</td></tr>
+            
+        <tr><td>url_template</td>
+            <td>String</td>
+            <td>Template of URL which receives HTTP request on event.<br>
+                The template string contains placeholders for data describing event:<br>
+                
+                <table>
+                <tr><td>%border</td>
+                    <td>Border ID.</td></tr>
+                <tr><td>%direction</td>
+                    <td>Direction in which the object crossed the border.<br>
+                        Possible values are:<br>
+                        0 – left to right,<br>
+                        1 – right to left.</td></tr>
+                <tr><td>%object</td>
+                    <td>Object ID.</td></tr>
+                </table>
+                
+                <br>
+                Example:<br>
+                <STRONG>http://host/border_event.php?border=%border&direction=%direction&object=%object</STRONG></td></tr>
+                                
+        <tr><td>method</td>
+            <td>String</td>
+            <td>HTTP method used in request to subscriber on event.</td></tr>
+        <tr><td>wildcard</td>
+            <td>Boolean</td>
+            <td>If this is a wildcard subscriber.<br>
+                This attribute cannot be changed after subscriber is created.</td></tr>
+        <tr><td>borders</td>
+            <td>Array</td>
+            <td>IDs of borders whose events this subscriber is currently subscribed to, explicitly or implicitly.<br>
+                This field is an alternative access point to data available via 
+                resource /borders_api/subscribers/id/borders.</td></tr>
+    </tr>
+</table>
+                       
+The fields `url_template` and `method` constitute key subscriber data. If they are equal in two Subscriber objects, 
+these objects are considered equal.
+
+Any changes to borders and event subscribers can be made only when they are not used by running engine 
+( **live mode** ) or data service ( **historic mode** ), i. e. only in **idle mode**. 
+
+Requests for change not in idle mode are responded with status 409 Conflict.
+
+
+## Collection of all border event subscribers [/borders_api/subscribers]
+
+### Get subscribers and their subscriptions [GET]
+
+# Response
+
+## JSON data
+
+    [ Subscriber-list ]
+
++ Response 200 (application/json)
+
+    + Body
+    
+                [ 
+                    {
+                        "borders": [ 1, 2, 3 ],
+                        "id": 1,
+                        "method": "POST",
+                        "url_template": "http://localhost:8181/admin/events.php?border=%border&direction=%direction&object=%object",
+                        "wildcard": true
+                    },
+                    {
+                        "borders": [ 1, 3 ],
+                        "id": 2,
+                        "method": "POST",
+                        "url_template": "http://10.1.90.2/events.php?door=%border&direction=%direction&object=%object",
+                        "wildcard": false
+                    }
+                ]
+
+### Update collection of subscribers with their subscriptions [PUT]
+
+Existing subscribers, having equal counterparts among given, are updated as if individual PUT was called 
+for each of them; IDs are retained.  
+Existing subscribers having no equal counterparts among given, are deleted as if individual DELETE was called 
+for each of them.  
+New subscribers are added as if POST was called for each of them.
+
+# Request
+
+## JSON data
+
+    [ Subscriber-list ]
+
+Each new `Subscriber` object should not have field `id`. 
+Field `borders` may be absent; for **wildcard subscribers** it is ignored.
+
+# Response
+
+## JSON data
+
+    Array of IDs assigned to subscribers specified in request, in corresponding order.
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If request contains equal subscribers, the response status is 400 Bad Request.  
+If `wildcard` field is being updated, the response status is 409 Conflict.  
+If `borders` field in any subscriber contains an invalid border ID, response status is 400 Bad Request.  
+If `borders` field in any subscriber contains an ID of historic border, the response status is 409 Conflict.  
+
++ Request (application/json)
+
+    + Body
+
+                [ 
+                    {
+                        "id": 1,
+                        "method": "POST",
+                        "url_template": "http://localhost:8181/admin/events.php?border=%border&direction=%direction&object=%object"
+                    },
+                    {
+                        "method": "POST",
+                        "url_template": "http://10.1.90.2/events.php?door=%border&direction=%direction&object=%object",
+                        "wildcard": false
+                    }
+                ]
+
++ Response 200 (application/json)
+
+    + Body
+    
+            [ 1, 2 ]
+    
+### Add subscriber and, optionally, its subscriptions [POST]
+
+# Request
+
+## JSON data
+
+    Subscriber
+    
+The `Subscriber` object should not have field `id`.  
+Field `borders` may be absent. For **wildcard subscribers** this field is ignored.
+
+# Response
+
+## JSON data
+
+    { "id": id }
+    
+where `id` is ID assigned to created subscriber.
+
+In successful case the response status is 201 Created and Location header field contains URL of created subscriber.  
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If given subscriber is equal to an already existing, the response status is 303 See Other, 
+and Location header field contains URL of existing subscriber.  
+If `borders` field contains an invalid border ID, response status is 400 Bad Request.  
+If `borders` field contains an ID of historic border, the response status is 409 Conflict.  
+
++ Request (application/json)
+
+    + Body
+    
+            {
+                "method": "POST",
+                "url_template": "http://10.1.90.2/events.php?door=%border&direction=%direction&object=%object",
+                "wildcard": false,
+                "borders": [ 1, 3 ]
+            }
+            
++ Response 201 (application/json)
+
+    + Body
+    
+            { "id": 2 }
+            
+### Delete all subscribers with their subscriptions [DELETE]
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.
+
++ Response 200
+
+
+## Border event subscriber [/borders_api/subscribers/{id}]
+
+This resource represents subscriber with identifier `id` and, optionally, its subscriptions.
+
++ Parameters
+
+    + id (required, integer, `1`)
+    
+        ID assigned to subscriber
+        
+### Get subscriber and its subscriptions [GET]
+
+# Response
+
+## JSON data
+
+    Subscriber
+    
++ Response 200 (application/json)
+
+    + Body
+    
+                {
+                    "borders": [ 1, 2, 3 ],
+                    "id": 1,
+                    "method": "POST",
+                    "url_template": "http://localhost:8181/admin/events.php?border=%border&direction=%direction&object=%object",
+                    "wildcard": true
+                }
+                
+### Update subscriber and/or its subscriptions [PUT]
+
+# Request
+
+## JSON data
+
+    Subscriber
+    
+The `Subscriber` object should not have field `id`.  
+Field `borders` may be absent; for **wildcard subscribers** it is ignored.
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If a subscriber equal to given already exists, the response status is 303 See Other and Location header 
+field contains URL of the existing subscriber.  
+If `wildcard` field is being updated, the response status is 409 Conflict.  
+If `borders` field contains an invalid border ID, response status is 400 Bad Request.  
+If `borders` field contains an ID of historic border, the response status is 409 Conflict.
+
++ Request (application/json)
+
+    + Body
+    
+                {
+                "method": "POST",
+                "url_template": "http://10.1.90.2/events.php?door=%border&direction=%direction&object=%object",
+                "wildcard": false,
+                "borders": [ 1, 3 ]
+            }
+                
++ Response 200
+
+
+### Delete subscriber with its subscriptions [DELETE]
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.
+
++ Response 200
+
+
+## Collection of subscriptions - explicit or implicit - of subscriber [/borders_api/subscribers/{id}/borders]
+
+This resource represents collection of subscriptions (explicit or implicit) of subscriber with identifier `id`, 
+i. e. `borders` (their IDs) it is (currently) subscribed to.
+
++ Parameters
+
+    + id (required, integer, `1`)
+    
+        ID assigned to subscriber
+        
+### Get subscriber subscriptions [GET]
+
+# Response
+
+## JSON data
+
+    Array of IDs of borders the subscriber is (currently) subscribed to.
+    
++ Response 200 (application/json)
+
+    + Body
+    
+                [ 1, 2, 3 ]
+                
+### Update - replace - subscriptions of explicit subscriber [PUT]
+
+This method is not allowed for **wildcard subscribers**.
+
+# Request
+
+## JSON data
+
+    Array of IDs of borders the subscriber is subscribed to.
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If the subscriber is `wildcard`, the response status is 409 Conflict.  
+If array contains an invalid border ID, response status is 400 Bad Request.  
+If array contains an ID of historic border, the response status is 409 Conflict.
+
++ Request (application/json)
+
+    + Body
+    
+                [1, 2]
+                
++ Response 200
+
+
+### Add subscription to single border [POST]
+
+This method is not allowed for **wildcard subscribers**.
+
+# Request
+
+## JSON data
+
+    { "id": id }
+    
+where `id` is ID of border to subscribe to.
+
+# Response
+
+Response does not have body.
+
+In successful case the response status is 201 Created and Location header field contains URL of 
+created subscription (in the form /subscribers/id/borders/id).  
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If the subscriber is `wildcard`, the response status is 409 Conflict.  
+If given subscription already exists, the response status is 303 See Other, and Location header field 
+contains URL of existing subscription (in the form /subscribers/id/borders/id).  
+If border ID is invalid, response status is 400 Bad Request.  
+If border ID refers to historic border, the response status is 409 Conflict.  
+
++ Request (application/json)
+
+    + Body
+                
+                {"id": 2}
+                
++ Response 200
+
+### Delete all subscriber subscriptions [DELETE]
+
+This method is not allowed for **wildcard subscribers**.
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If the subscriber is `wildcard`, the response status is 409 Conflict.
+
++ Response 200
+
+
+## Subscription of subscriber [/borders_api/subscribers/{subscriber_id}/borders/{border_id}]
+
+This resource represents subscription of subscriber with `subscriber_id` to border with `border_id`.
+
++ Parameters
+
+    + subscriber_id (required, integer, `1`)
+    
+        ID assigned to subscriber
+        
+    + border_id (required, integer, `1`)
+    
+        ID assigned to border
+        
+### Delete the subscription [DELETE]
+
+This method is not allowed for **wildcard subscribers**.
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If the subscriber is `wildcard`, the response status is 409 Conflict.
+
++ Response 200
+
+
+
+
+
+
+
+
+
+
+# Group Area sensor subscribers
+
+This resource provides the ability to control **subscribers** to area ( `hotspot` equivalent term ) events, 
+which receive notifications (HTTP requests) when events occur. 
+A subscriber can be subscribed to an explicitly specified set of active areas ( **explicit subscriber** ), 
+or implicitly to all active areas, including future ones ( **wildcard subscriber** ).
+
+A **subscriber** is defined by URL and HTTP method.  
+Subscriber:
+
+    {
+        "id": id,
+
+        "url_template": url_template,
+        "method": method,
+        "wildcard": wildcard,
+
+        "hotspots": [ hotspot_id-list ]
+    }
+where
+<table>
+    <tr>
+        <tr> 
+            <th bgcolor="#555555">Field</th> 
+            <th bgcolor="#555555">Type</th>
+            <th bgcolor="#555555">Description</th> 
+        </tr>
+        
+        <tr><td>id</td>
+            <td>Integer</td>
+            <td>Subscriber ID.<br>
+            This field is read-only.</td></tr>
+            
+        <tr><td>url_template</td>
+            <td>String</td>
+            <td>Template of URL which receives HTTP request on event.<br>
+                The template string contains placeholders for data describing event:<br>
+                
+                <table>
+                <tr><td>%hotspot</td>
+                    <td>Hot-spot ID.</td></tr>
+                <tr><td>%type</td>
+                    <td>Event type<br>
+                        Possible values are:<br>
+                        0 – object entered,<br>
+                        1 – object exited.</td></tr>
+                <tr><td>%object</td>
+                    <td>Object ID.</td></tr>
+                </table>
+                
+                <br>
+                Example:<br>
+                <STRONG>http://host/hotspot_event.php?hotspot=%hotspot&type=%type&object=%object</STRONG></td></tr>
+                                
+        <tr><td>method</td>
+            <td>String</td>
+            <td>HTTP method used in request to subscriber on event.</td></tr>
+        <tr><td>wildcard</td>
+            <td>Boolean</td>
+            <td>If this is a wildcard subscriber.<br>
+                This attribute cannot be changed after subscriber is created.</td></tr>
+        <tr><td>hotspots</td>
+            <td>Array</td>
+            <td>IDs of hotspots whose events this subscriber is currently subscribed to, explicitly or implicitly.<br>
+                This field is an alternative access point to data available via 
+                resource /hotspots_api/subscribers/id/hotspots.</td></tr>
+    </tr>
+</table>
+                       
+The fields `url_template` and `method` constitute key subscriber data. If they are equal in two Subscriber objects, 
+these objects are considered equal.
+
+Any changes to hotspots and event subscribers can be made only when they are not used by running engine 
+( **live mode** ) or data service ( **historic mode** ), i. e. only in **idle mode**. 
+
+Requests for change not in idle mode are responded with status 409 Conflict.
+
+
+## Collection of all hotspot event subscribers [/hotspots_api/subscribers]
+
+### Get subscribers and their subscriptions [GET]
+
+# Response
+
+## JSON data
+
+    [ Subscriber-list ]
+
++ Response 200 (application/json)
+
+    + Body
+    
+                [ 
+                    {
+                        "hotspots": [ 1, 2, 3 ],
+                        "id": 1,
+                        "method": "POST",
+                        "url_template": "http://localhost:8181/admin/events.php?hotspot=%hotspot&type=%type&object=%object",
+                        "wildcard": true
+                    },
+                    {
+                        "hotspots": [ 1, 3 ],
+                        "id": 2,
+                        "method": "POST",
+                        "url_template": "http://10.1.90.2/events.php?kiosk=%hotspot&type=%type&object=%object",
+                        "wildcard": false
+                    }
+                ]
+
+### Update collection of subscribers with their subscriptions [PUT]
+
+Existing subscribers, having equal counterparts among given, are updated as if individual PUT was called 
+for each of them; IDs are retained.  
+Existing subscribers having no equal counterparts among given, are deleted as if individual DELETE was called 
+for each of them.  
+New subscribers are added as if POST was called for each of them.
+
+# Request
+
+## JSON data
+
+    [ Subscriber-list ]
+
+Each new `Subscriber` object should not have field `id`. 
+Field `hotspots` may be absent; for **wildcard subscribers** it is ignored.
+
+# Response
+
+## JSON data
+
+    Array of IDs assigned to subscribers specified in request, in corresponding order.
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If request contains equal subscribers, the response status is 400 Bad Request.  
+If `wildcard` field is being updated, the response status is 409 Conflict.  
+If `hotspots` field in any subscriber contains an invalid hotspot ID, response status is 400 Bad Request.  
+If `hotspots` field in any subscriber contains an ID of historic hotspot, the response status is 409 Conflict.  
+
++ Request (application/json)
+
+    + Body
+
+                [ 
+                    {
+                        "id": 1,
+                        "method": "POST",
+                        "url_template": "http://localhost:8181/admin/events.php?hotspot=%hotspot&type=%type&object=%object"
+                    },
+                    {
+                        "method": "POST",
+                        "url_template": "http://10.1.90.2/events.php?kiosk=%hotspot&type=%type&object=%object",
+                        "wildcard": false
+                    }
+                ]
+
++ Response 200 (application/json)
+
+    + Body
+    
+            [ 1, 2 ]
+    
+### Add subscriber and, optionally, its subscriptions [POST]
+
+# Request
+
+## JSON data
+
+    Subscriber
+    
+The `Subscriber` object should not have field `id`.  
+Field `hotspots` may be absent. For **wildcard subscribers** this field is ignored.
+
+# Response
+
+## JSON data
+
+    { "id": id }
+    
+where `id` is ID assigned to created subscriber.
+
+In successful case the response status is 201 Created and Location header field contains URL of created subscriber.  
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If given subscriber is equal to an already existing, the response status is 303 See Other, 
+and Location header field contains URL of existing subscriber.  
+If `hotspots` field contains an invalid hotspot ID, response status is 400 Bad Request.  
+If `hotspots` field contains an ID of historic hotspot, the response status is 409 Conflict.  
+
++ Request (application/json)
+
+    + Body
+    
+            {
+                "method": "POST",
+                "url_template": "http://10.1.90.2/events.php?kiosk=%hotspot&type=%type&object=%object",
+                "wildcard": false,
+                "hotspots": [ 1, 3 ]
+            }
+            
++ Response 201 (application/json)
+
+    + Body
+    
+            { "id": 2 }
+            
+### Delete all subscribers with their subscriptions [DELETE]
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.
+
++ Response 200
+
+
+## Hotspot event subscriber [/hotspots_api/subscribers/{id}]
+
+This resource represents subscriber with identifier `id` and, optionally, its subscriptions.
+
++ Parameters
+
+    + id (required, integer, `1`)
+    
+        ID assigned to subscriber
+        
+### Get subscriber and its subscriptions [GET]
+
+# Response
+
+## JSON data
+
+    Subscriber
+    
++ Response 200 (application/json)
+
+    + Body
+    
+                {
+                    "hotspots": [ 1, 2, 3 ],
+                    "id": 1,
+                    "method": "POST",
+                    "url_template": "http://localhost:8181/admin/events.php?hotspot=%hotspot&type=%type&object=%object",
+                    "wildcard": true
+                }
+                
+### Update subscriber and/or its subscriptions [PUT]
+
+# Request
+
+## JSON data
+
+    Subscriber
+    
+The `Subscriber` object should not have field `id`.  
+Field `hotspots` may be absent; for **wildcard subscribers** it is ignored.
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If a subscriber equal to given already exists, the response status is 303 See Other and Location header 
+field contains URL of the existing subscriber.  
+If `wildcard` field is being updated, the response status is 409 Conflict.  
+If `hotspots` field contains an invalid hotspot ID, response status is 400 Bad Request.  
+If `hotspots` field contains an ID of historic hotspot, the response status is 409 Conflict.
+
++ Request (application/json)
+
+    + Body
+    
+                {
+                "method": "POST",
+                "url_template": "http://10.1.90.2/events.php?kiosk=%hotspot&type=%type&object=%object",
+                "wildcard": false,
+                "hotspots": [ 1, 3 ]
+            }
+                
++ Response 200
+
+
+### Delete subscriber with its subscriptions [DELETE]
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.
+
++ Response 200
+
+
+## Collection of subscriptions - explicit or implicit - of subscriber [/hotspots_api/subscribers/{id}/hotspots]
+
+This resource represents collection of subscriptions (explicit or implicit) of subscriber with identifier `id`, 
+i. e. `hotspots` (their IDs) it is (currently) subscribed to.
+
++ Parameters
+
+    + id (required, integer, `1`)
+    
+        ID assigned to subscriber
+        
+### Get subscriber subscriptions [GET]
+
+# Response
+
+## JSON data
+
+    Array of IDs of hotspots the subscriber is (currently) subscribed to.
+    
++ Response 200 (application/json)
+
+    + Body
+    
+                [ 1, 2, 3 ]
+                
+### Update - replace - subscriptions of explicit subscriber [PUT]
+
+This method is not allowed for **wildcard subscribers**.
+
+# Request
+
+## JSON data
+
+    Array of IDs of hotspots the subscriber is subscribed to.
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If the subscriber is `wildcard`, the response status is 409 Conflict.  
+If array contains an invalid hotspot ID, response status is 400 Bad Request.  
+If array contains an ID of historic hotspot, the response status is 409 Conflict.
+
++ Request (application/json)
+
+    + Body
+    
+                [1, 2]
+                
++ Response 200
+
+
+### Add subscription to single hotspot [POST]
+
+This method is not allowed for **wildcard subscribers**.
+
+# Request
+
+## JSON data
+
+    { "id": id }
+    
+where `id` is ID of hotspot to subscribe to.
+
+# Response
+
+Response does not have body.
+
+In successful case the response status is 201 Created and Location header field contains URL of 
+created subscription (in the form /subscribers/id/hotspots/id).  
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If the subscriber is `wildcard`, the response status is 409 Conflict.  
+If given subscription already exists, the response status is 303 See Other, and Location header field 
+contains URL of existing subscription (in the form /subscribers/id/hotspots/id).  
+If hotspot ID is invalid, response status is 400 Bad Request.  
+If hotspot ID refers to historic hotspot, the response status is 409 Conflict.  
+
++ Request (application/json)
+
+    + Body
+                
+                {"id": 2}
+                
++ Response 200
+
+### Delete all subscriber subscriptions [DELETE]
+
+This method is not allowed for **wildcard subscribers**.
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If the subscriber is `wildcard`, the response status is 409 Conflict.
+
++ Response 200
+
+
+## Subscription of subscriber [/hotspots_api/subscribers/{subscriber_id}/hotspots/{hotspot_id}]
+
+This resource represents subscription of subscriber with `subscriber_id` to hotspot with `hotspot_id`.
+
++ Parameters
+
+    + subscriber_id (required, integer, `1`)
+    
+        ID assigned to subscriber
+        
+    + hotspot_id (required, integer, `1`)
+    
+        ID assigned to hotspot
+        
+### Delete the subscription [DELETE]
+
+This method is not allowed for **wildcard subscribers**.
+
+# Response
+
+Response does not have body.
+
+If application is not in **idle mode**, the response status is 409 Conflict.  
+If the subscriber is `wildcard`, the response status is 409 Conflict.
+
++ Response 200
