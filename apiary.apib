@@ -288,7 +288,7 @@ Please, go through all links and read carefully all link`s content.
   
          curl --cert cert.pem --key key.pem --cacert ca.pem -H "Content-Type: application/json" \
          -X POST 'https://<docker_ip>:2376/containers/create?name=<container_name>' \
-         -d '{ "Cmd": [ "/opt/move/awl-moved-wrapper_<type>.sh", "e --mode=live -c <camera_url>" ], "Image": "lokawarelive/docker_move", "HostConfig": { "PortBindings": { "8082/tcp": [{ "HostPort": "<websocket_shared_host_port>" }], "8182/tcp": [{ "HostPort": "<move_shared_host_port>" }] } } }' \
+         -d '{ "Cmd": [ "/opt/move/awl-moved-wrapper_<type>.sh", "e --mode=live -c <camera_url>" ], "Image": "docker_move:<docker TAG>", "HostConfig": { "PortBindings": { "8082/tcp": [{ "HostPort": "<websocket_shared_host_port>" }], "8182/tcp": [{ "HostPort": "<move_shared_host_port>" }] } } }' \
          -D -
          
     where < docker_ip > is host IP  
