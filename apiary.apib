@@ -38,7 +38,6 @@ If it runs separately, it is in **_historic mode_** and have no `current session
             <th bgcolor="#555555">Name</th>
             <th bgcolor="#555555">Function</th>
         </tr>
-        
         <tr><td>/log</td>
             <td>Get log messages.</td></tr>
         <tr><td>/network</td>
@@ -55,7 +54,6 @@ If it runs separately, it is in **_historic mode_** and have no `current session
             <td>Reboot or shut down the system.</td></tr>
         <tr><td>/license</td>
             <td>Get list of licensed modules.</td></tr>
-        
         <tr><td>/layout</td>
             <td>Get / set layout of sensors (lines and areas) and tracker's special areas.</td></tr>
         <tr><td>/borders_api</td>
@@ -73,7 +71,6 @@ If it runs separately, it is in **_historic mode_** and have no `current session
             <th bgcolor="#555555">Name</th> 
             <th bgcolor="#555555">Function</th> 
         </tr>
-    
         <tr><td>/data</td>
             <td>Get tracking data.</td></tr>
     </tr>
@@ -87,7 +84,6 @@ If it runs separately, it is in **_historic mode_** and have no `current session
             <th bgcolor="#555555">Name</th> 
             <th bgcolor="#555555">Function</th> 
         </tr>
-        
         <tr><td>/video</td>
             <td>Get video stream with recognition visualization marks.</td></tr>
         <tr><td>/snapshots</td> 
@@ -127,7 +123,6 @@ The possible HTTP status values are listed in the following table.
             <th bgcolor="#555555">Status</th> 
             <th bgcolor="#555555">Reason</th> 
         </tr>
-        
         <tr><td>200 OK</td>
             <td>Operation completed successfully.</td></tr>
         <tr><td>201 Created</td> 
@@ -177,7 +172,6 @@ This document uses two conventional data types.
             <th bgcolor="#555555">Type</th> 
             <th bgcolor="#555555">Description</th> 
         </tr>
-        
         <tr><td>ApiTime</td>
             <td>Number of milliseconds since 1970-01-01 00:00:00 UTC.<td/></tr>
         <tr><td>ApiTimeMcs</td>
@@ -392,7 +386,6 @@ Event fields:
             <th bgcolor="#555555">Type</th>
             <th bgcolor="#555555">Description</th>
         </tr>
-        
         <tr><td>type</td> 
             <td>String</td> 
             <td>Event type. There are several types, but only type “Msg” (message event) is documented. 
@@ -481,14 +474,12 @@ where
             <th bgcolor="#555555">Type</th>
             <th bgcolor="#555555">Description</th>
         </tr>
-        
         <tr><td>id</td>
             <td>String</td>
             <td>Interface ID. Examples: eth1, wlan0</td></tr>
         <tr><td>is_wlan</td>
             <td>Boolean</td>
             <td>If interface is wireless.</td></tr>
-        
         <tr bgcolor="#999999">
             <td colspan="3">WLAN parameters</td>
         </tr>
@@ -507,7 +498,6 @@ where
             <td>String</td>
             <td>WPA passphrase.<br>
                 Present only if security method is WPA or WPA2.</td></tr>
-        
         <tr bgcolor="#999999">
             <td colspan="3">High-level parameters</td>
         </tr>
@@ -794,7 +784,6 @@ where
             <th bgcolor="#555555">Type</th>
             <th bgcolor="#555555">Description</th>
         </tr>
-        
         <tr><td>id</td> 
             <td>DeviceId</td> 
             <td>Device ID, assigned by the server.</td></tr>
@@ -1284,7 +1273,6 @@ where
             <th bgcolor="#555555">Type</th>
             <th bgcolor="#555555">Description</th>
         </tr>
-        
         <tr><td>name</td>
             <td>String</td>
             <td>Module name.</td></tr>
@@ -1351,7 +1339,6 @@ where
             <th bgcolor="#555555">Field</th>
             <th bgcolor="#555555">Description</th>
         </tr>
-        
         <tr><td>jpeg-length</td>
             <td>Length of frame image JPEG in bytes.</td></tr>
         <tr><td>jpeg</td>
@@ -1549,7 +1536,6 @@ where
             <th bgcolor="#555555">Type</th>
             <th bgcolor="#555555">Description</th>
         <tr/>
-        
         <tr><td>name</td>
             <td>String</td>
             <td>Module name.</td></tr>
@@ -1580,7 +1566,6 @@ where
             <th bgcolor="#555555">Type</th>
             <th bgcolor="#555555">Description</th>
         <tr/> 
-        
         <tr>
             <td>name</td>
             <td>String</td>
@@ -1591,7 +1576,6 @@ where
         <tr><td>description</td>
             <td>String</td>
             <td>Parameter description. Can be empty.</td></tr>
-        
         <tr><td>type</td>
             <td>String</td> 
             <td>
@@ -1601,7 +1585,6 @@ where
                             <th bgcolor="#555555">Parameter type</th>
                             <th bgcolor="#555555">Possible values are</th>
                         </tr>
-                        
                         <tr><td>int</td>
                             <td>Integer number.</td></tr>
                         <tr><td>real</td>
@@ -1619,7 +1602,6 @@ where
                 </table>
             </td> 
         </tr>
-        
         <tr><td>requires_restart</td>
             <td>Boolean</td> 
             <td>Specifies if changing value of this parameter requires engine restart.
@@ -1643,7 +1625,6 @@ The _web_ key contains parameters specifying high-level communication options:
             <th bgcolor="#555555">Type</th>
             <th bgcolor="#555555">Description</th>
         <tr/> 
-        
         <tr><td>domain</td>
             <td>String</td>
             <td>Fully qualified domain name of application host. 
@@ -1663,7 +1644,6 @@ The _authorization_ key contains authorization parameters. Authorization is requ
             <th bgcolor="#555555">Type</th>
             <th bgcolor="#555555">Description</th>
         <tr/>
-        
         <tr><td>password</td>
             <td>String</td>
             <td>Password.</td></tr>
@@ -1684,7 +1664,6 @@ MOVE has the following specific module parameters:
             <th bgcolor="#555555">Description</th>
             <th bgcolor="#555555">Requires restart</th>
         <tr/> 
-        
         <tr bgcolor="#999999">
             <td colspan="4">VisualSnapshotSaver module</td>
         </tr>
@@ -1708,7 +1687,6 @@ MOVE has the following specific module parameters:
             <td>int</td>
             <td>Maximum number of stored snapshots</td>
             <td>no</td></tr>
-        
         <tr bgcolor="#999999">
             <td colspan="4">VisualSnapshotSaverHttpInterface module</td>
         </tr>
@@ -1720,7 +1698,6 @@ MOVE has the following specific module parameters:
             <td>Base path to replace with</td>
             <td>string</td>
             <td>no</td></tr>
-        
         <tr bgcolor="#999999">
             <td colspan="4">VideoWriter module</td>
         </tr>
@@ -1732,7 +1709,6 @@ MOVE has the following specific module parameters:
             <td>real</td>
             <td>FPS of output video file</td>
             <td>yes</td></tr>
-        
         <tr bgcolor="#999999">
             <td colspan="4">JpegEncoder module</td>
         </tr>
@@ -1748,7 +1724,6 @@ MOVE has the following specific module parameters:
             <td>int</td>
             <td>JPEG compression quality</td>
             <td>no</td></tr>
-        
         <tr bgcolor="#999999">
             <td colspan="4">Tracker module</td></tr>
         <tr><td>camera_altitude</td> 
@@ -1767,7 +1742,6 @@ MOVE has the following specific module parameters:
             <td>bool</td>
             <td>Use TV-L1 algorithm</td>
             <td>yes</td></tr>
-        
         <tr bgcolor="#999999">
             <td colspan="4">TrackerDataService module</td>
         </tr>
@@ -1785,7 +1759,6 @@ MOVE has the following specific module parameters:
                 and timer restarts from that moment. When user leaves, the snapshot for previous 
                 frame (last frame user was seen on) is also saved.</td>
             <td>yes</td></tr>
-        
         <tr bgcolor="#999999">
             <td colspan="4">TrackerObjectVisualizer module</td>
         </tr>
@@ -1941,7 +1914,6 @@ The **general parameters** are:
             <th bgcolor="#555555">Name</th>      
             <th bgcolor="#555555">Description</th>
         <tr/> 
-        
         <tr><td>info</td> 
             <td>What kinds of information to return.</td></tr>
         <tr><td>time</td>
@@ -1959,8 +1931,7 @@ The **entity filter parameters** are:
             <th bgcolor="#555555">Name</th>      
             <th bgcolor="#555555">Description</th>
             <th bgcolor="#555555">Applies to query types</th>
-        <tr/> 
-        
+        <tr/>
         <tr><td>objects</td>
             <td>Objects to return data for.</td>
             <td>Event, state</td></tr>
@@ -1992,8 +1963,7 @@ Possible list elements are:
         <tr> 
             <th bgcolor="#555555">Name</th>      
             <th bgcolor="#555555">Description</th>
-        <tr/> 
-        
+        <tr/>
         <tr><td>dwell_events</td> 
             <td>Events corresponding to dwelling of objects in scene: object detected, lost, exited, reentered.</td></tr>
         <tr><td>tracks</td> 
@@ -2030,7 +2000,6 @@ Possible list elements are:
             <th bgcolor="#555555">Name</th>      
             <th bgcolor="#555555">Description</th>
         <tr/> 
-        
         <tr><td>objects</td>
             <td>Return objects available in scene.</td></tr>
         <tr><td>areas</td>
@@ -2081,8 +2050,7 @@ where:
             <th bgcolor="#555555">Field</th>      
             <th bgcolor="#555555">Type</th>
             <th bgcolor="#555555">Description</th>
-        <tr/> 
-        
+        <tr/>
         <tr><td>id</td>
             <td>Integer</td>
             <td>Object ID.</td></tr>
@@ -2120,8 +2088,7 @@ where
             <th bgcolor="#555555">Field</th>      
             <th bgcolor="#555555">Type</th>
             <th bgcolor="#555555">Description</th>
-        <tr/> 
-        
+        <tr/>
         <tr><td>id</td>
             <td>Integer</td>
             <td>Object ID.</td></tr>
@@ -2160,7 +2127,6 @@ where
             <th bgcolor="#555555">Type</th>
             <th bgcolor="#555555">Description</th>
         <tr/> 
-        
         <tr><td>line_id</td>
             <td>Integer</td>
             <td>Line sensor ID.</td></tr>
@@ -2204,8 +2170,7 @@ where
             <th bgcolor="#555555">Field</th>      
             <th bgcolor="#555555">Type</th>
             <th bgcolor="#555555">Description</th>
-        <tr/> 
-        
+        <tr/>
         <tr><td>area_id</td>
             <td>Integer</td>
             <td>Area sensor ID.</td></tr>
@@ -2242,8 +2207,7 @@ where
             <th bgcolor="#555555">Field</th>      
             <th bgcolor="#555555">Type</th>
             <th bgcolor="#555555">Description</th>
-        <tr/> 
-        
+        <tr/>
         <tr><td>timestamp</td> 
             <td>ApiTime</td> 
             <td>Timestamp of the frame the returned data corresponds to.<br>
@@ -2270,8 +2234,7 @@ where
             <th bgcolor="#555555">Field</th>      
             <th bgcolor="#555555">Type</th>
             <th bgcolor="#555555">Description</th>
-        <tr/> 
-        
+        <tr/>
         <tr><td>id</td>
             <td>Integer</td>
             <td>Object ID.</td></tr>
@@ -2302,8 +2265,7 @@ where
             <th bgcolor="#555555">Field</th>      
             <th bgcolor="#555555">Type</th>
             <th bgcolor="#555555">Description</th>
-        <tr/> 
-        
+        <tr/>
         <tr><td>area_id</td>
             <td>Integer</td>
             <td>Area sensor ID.</td></tr>
@@ -2534,8 +2496,7 @@ Common metadata attributes for sensors are
             <th bgcolor="#555555">Name</th>
             <th bgcolor="#555555">Type</th>
             <th bgcolor="#555555">Description</th>
-        <tr/> 
-        
+        <tr/>
         <tr><td>id</td> 
             <td>Integer</td> 
             <td>Sensor ID.<br />
@@ -2651,7 +2612,6 @@ Possible errors, specific to this request:
             <th bgcolor="#555555">Status</th> 
             <th bgcolor="#555555">Condition</th> 
         </tr>
-        
         <tr><td>400 Bad Request</td>
             <td>XML is not well-formed.</td></tr>
         <tr><td>400 Bad Request</td>
@@ -2738,17 +2698,14 @@ where
             <th bgcolor="#555555">Type</th>
             <th bgcolor="#555555">Description</th> 
         </tr>
-        
         <tr><td>id</td>
             <td>Integer</td>
             <td>Subscriber ID.<br>
             This field is read-only.</td></tr>
-            
         <tr><td>url_template</td>
             <td>String</td>
             <td>Template of URL which receives HTTP request on event.<br>
                 The template string contains placeholders for data describing event:<br>
-                
                 <table>
                 <tr><td>%border</td>
                     <td>Border ID.</td></tr>
@@ -2760,11 +2717,9 @@ where
                 <tr><td>%object</td>
                     <td>Object ID.</td></tr>
                 </table>
-                
                 <br>
                 Example:<br>
                 <STRONG>http://host/border_event.php?border=%border&direction=%direction&object=%object</STRONG></td></tr>
-                                
         <tr><td>method</td>
             <td>String</td>
             <td>HTTP method used in request to subscriber on event.</td></tr>
@@ -3153,14 +3108,16 @@ Subscriber:
 
     {
         "id": id,
-
+        
         "url_template": url_template,
         "method": method,
         "wildcard": wildcard,
-
+        
         "hotspots": [ hotspot_id-list ]
     }
+    
 where
+
 <table>
     <tr>
         <tr> 
@@ -3168,17 +3125,14 @@ where
             <th bgcolor="#555555">Type</th>
             <th bgcolor="#555555">Description</th> 
         </tr>
-        
         <tr><td>id</td>
             <td>Integer</td>
             <td>Subscriber ID.<br>
             This field is read-only.</td></tr>
-            
         <tr><td>url_template</td>
             <td>String</td>
             <td>Template of URL which receives HTTP request on event.<br>
                 The template string contains placeholders for data describing event:<br>
-                
                 <table>
                 <tr><td>%hotspot</td>
                     <td>Hot-spot ID.</td></tr>
@@ -3190,11 +3144,9 @@ where
                 <tr><td>%object</td>
                     <td>Object ID.</td></tr>
                 </table>
-                
                 <br>
                 Example:<br>
                 <STRONG>http://host/hotspot_event.php?hotspot=%hotspot&type=%type&object=%object</STRONG></td></tr>
-                                
         <tr><td>method</td>
             <td>String</td>
             <td>HTTP method used in request to subscriber on event.</td></tr>
